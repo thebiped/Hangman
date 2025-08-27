@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="CustomAlertDialog"></style>
+    <!-- Este es el estilo para tus AlertDialogs personalizados -->
+    <style name="CustomAlertDialogStyle" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <!-- Fondo transparente -->
+        <item name="android:windowMinWidthMajor">85%</item>
+        <item name="android:windowMinWidthMinor">85%</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <!-- Remueve el default scrim si quieres manejarlo tú manualmente -->
+        <item name="android:windowIsTranslucent">true</item>
+        <!-- Opcional: padding interno -->
+        <item name="android:insetBottom">24dp</item>
+        <item name="android:insetTop">24dp</item>
+        <item name="android:insetLeft">24dp</item>
+        <item name="android:insetRight">24dp</item>
+    </style>
+
+</resources>

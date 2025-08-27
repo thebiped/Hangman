@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/backgroundDark">
+
+    <!-- Scroll con todo el contenido visual del Home -->
+    <ScrollView
+        android:id="@+id/scrollHome"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottomNavigation"
+        android:fillViewport="true"
+        tools:ignore="NotSibling">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Top bar con puntos y cerrar sesión -->
+            <LinearLayout
+                android:id="@+id/topBar"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_uno"
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_star"
+                        app:tint="@color/textWhite" />
+
+                    <TextView
+                        android:id="@+id/txtPoints"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="10"
+                        android:textColor="@android:color/white"
+                        android:layout_marginStart="4dp"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="240dp"
+                    android:layout_height="wrap_content"/>
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnCerrarSesion"
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:padding="12dp"
+                    android:background="@drawable/bg_logout"
+                    android:gravity="center_vertical"
+                    android:drawableEnd="@drawable/ic_logout"
+                    android:drawableTint="@color/textWhite"
+                    android:contentDescription="Botón para cerrar sesión" />
+
+            </LinearLayout>
+
+            <!-- Estadísticas recientes -->
+            <LinearLayout
+                android:id="@+id/cardStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card_stat"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Estadísticas Recientes"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <include layout="@layout/item_stat_card" />
+                    <include layout="@layout/item_stat_card" />
+                    <include layout="@layout/item_stat_card" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Modos de juego -->
+            <LinearLayout
+                android:id="@+id/gameModesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+
+                <LinearLayout
+                    android:background="@drawable/bg_card_modo"
+                    android:layout_marginBottom="16dp"
+                    android:padding="16dp"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <!-- Imagen redonda -->
+                    <ImageView
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="start"
+                        android:layout_marginBottom="8dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/classic"
+                        android:background="@drawable/circle_mask"
+                        android:clipToOutline="true"
+                        android:outlineProvider="background" />
+
+
+                    <TextView
+                        android:text="Modo Clásico"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:text="Juega al ahorcado tradicional con palabras aleatorias."
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnJugarClasico"
+                        android:text="Jugar Ahora"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/btn_primary_home"
+                        android:textColor="@color/textWhite" />
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:background="@drawable/bg_card_disabled"
+                    android:layout_marginBottom="16dp"
+                    android:padding="16dp"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="start"
+                        android:layout_marginBottom="8dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/tematico"
+                        android:background="@drawable/circle_mask"
+                        android:clipToOutline="true"
+                        android:outlineProvider="background" />
+
+                    <TextView
+                        android:text="Modo Temático"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:text="Palabras agrupadas por categorías: deportes, animales, países, etc."
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnModoTematico"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Próximamente"
+                        android:textColor="@android:color/white"
+                        android:enabled="false"
+                        android:background="@drawable/btn_disabled_home"
+                        android:padding="12dp"
+                        android:textAllCaps="false"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:background="@drawable/bg_card_disabled"
+                    android:layout_marginBottom="16dp"
+                    android:padding="16dp"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="start"
+                        android:layout_marginBottom="8dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/cronometro"
+                        android:background="@drawable/circle_mask"
+                        android:clipToOutline="true"
+                        android:outlineProvider="background" />
+
+                    <TextView
+                        android:text="Modo Contra Reloj"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:text="Adivina tantas palabras como puedas antes de que se acabe el tiempo."
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnModoReloj"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Próximamente"
+                        android:textColor="@android:color/white"
+                        android:enabled="false"
+                        android:background="@drawable/btn_disabled_home"
+                        android:padding="12dp"
+                        android:textAllCaps="false"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</RelativeLayout>
