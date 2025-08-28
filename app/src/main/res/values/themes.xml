@@ -1,4 +1,6 @@
+<!-- themes.xml -->
 <resources xmlns:tools="http://schemas.android.com/tools">
+
     <!-- Tema del splash screen nativo -->
     <style name="Theme.App.Start" parent="Theme.SplashScreen">
         <item name="windowSplashScreenAnimatedIcon">@drawable/hangman_logo</item>
@@ -7,7 +9,8 @@
     </style>
 
     <!-- Tema para el resto de la aplicación -->
-    <style name="Base.Theme.Hangman" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.Hangman" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/backgroundDark</item>
     </style>
+
 </resources>

@@ -26,19 +26,24 @@
             
         <activity
             android:name=".NavbarBottomActivity"
-            android:exported="false" />
+            android:theme="@style/Base.Theme.Hangman"
+            android:exported="false"  />
         <activity
             android:name=".ModoClasicoActivity"
+            android:theme="@style/Base.Theme.Hangman"
             android:exported="false" />
         <activity
             android:name=".WelcomeActivity"
-            android:exported="false" />
+            android:exported="true"
+            android:theme="@style/Theme.Material3.DayNight.NoActionBar"  />
         <activity
             android:name=".ui.RegisterActivity"
+            android:theme="@style/Base.Theme.Hangman"
             android:exported="false" />
         <activity
             android:name=".ui.LoginActivity"
-            android:exported="false" />
+            android:theme="@style/Base.Theme.Hangman"
+            android:exported="false"  />
     </application>
 
 </manifest>
