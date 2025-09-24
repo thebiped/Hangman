@@ -19,28 +19,33 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:layout_margin="24dp">
 
             <!-- Top bar con puntos y cerrar sesión -->
-            <LinearLayout
+            <RelativeLayout
                 android:id="@+id/topBar"
                 android:layout_width="match_parent"
-                android:layout_height="42dp"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="16dp">
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:paddingVertical="8dp">
 
+                <!-- Contenedor de puntos -->
                 <LinearLayout
+                    android:id="@+id/pointsContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_uno"
                     android:orientation="horizontal"
-                    android:padding="8dp">
+                    android:padding="8dp"
+                    android:background="@drawable/bg_uno"
+                    android:gravity="center_vertical"
+                    android:layout_alignParentStart="true">
 
                     <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:src="@drawable/ic_star"
-                        app:tint="@color/textWhite" />
+                        android:contentDescription="Puntos"
+                        app:tint="@color/textWhite"/>
 
                     <TextView
                         android:id="@+id/txtPoints"
@@ -48,26 +53,29 @@
                         android:layout_height="wrap_content"
                         android:text="10"
                         android:textColor="@android:color/white"
-                        android:layout_marginStart="4dp"
-                        android:textSize="14sp" />
+                        android:layout_marginStart="8dp"
+                        android:autoSizeTextType="uniform"
+                        android:autoSizeMinTextSize="12sp"
+                        android:autoSizeMaxTextSize="16sp"/>
                 </LinearLayout>
 
-                <View
-                    android:layout_width="240dp"
-                    android:layout_height="wrap_content"/>
-
+                <!-- Botón de cerrar sesión alineado a la derecha -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnCerrarSesion"
-                    android:layout_width="48dp"
-                    android:layout_height="match_parent"
-                    android:padding="12dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="48dp"
+                    android:minHeight="48dp"
                     android:background="@drawable/bg_logout"
-                    android:gravity="center_vertical"
                     android:drawableEnd="@drawable/ic_logout"
                     android:drawableTint="@color/textWhite"
-                    android:contentDescription="Botón para cerrar sesión" />
+                    android:contentDescription="Cerrar sesión"
+                    android:padding="12dp"
+                    android:gravity="center"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"/>
+            </RelativeLayout>
 
-            </LinearLayout>
 
             <!-- Estadísticas recientes -->
             <LinearLayout

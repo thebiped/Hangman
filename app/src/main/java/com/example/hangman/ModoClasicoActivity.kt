@@ -146,45 +146,82 @@ class ModoClasicoActivity : AppCompatActivity() {
     }
 
     // Muestra pista si hay puntos y no se usó aún
+    @SuppressLint("MissingInflatedId")
     private fun mostrarPista() {
         if (pistaUsada) {
-            mostrarModalAdvertencia("Ya usaste la pista en esta ronda.")
+            mostrarModalAdvertencia("Ya usaste la ayuda en esta ronda.")
             return
         }
 
         if (puntos < 10) {
-            mostrarModalAdvertencia("Necesitás al menos 10 puntos para usar una pista.")
+            mostrarModalAdvertencia("Necesitás al menos 10 puntos para usar la ayuda.")
             return
         }
 
-        puntos -= 10
-        pistaUsada = true
-        binding.txtPuntos.text = "Puntos: $puntos"
-
-        val pista = palabraActual.first()
-
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_ayuda, null)
-        val txtAyuda = view.findViewById<TextView>(R.id.txtAyuda)
-        txtAyuda.text = "¡Pista! La primera letra es: $pista"
-
-        val dialog = AlertDialog.Builder(this, R.style.CustomAlertDialogStyle)
-            .setView(view)
-            .setCancelable(true)
+        // Primero mostramos el diálogo de confirmación
+        val confirmView = LayoutInflater.from(this).inflate(R.layout.dialog_confirmacion_ayuda, null)
+        val dialogConfirm = AlertDialog.Builder(this, R.style.CustomAlertDialogStyle)
+            .setView(confirmView)
+            .setCancelable(false)
             .create()
 
-        dialog.window?.apply {
+        dialogConfirm.window?.apply {
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             setLayout(
                 (resources.displayMetrics.widthPixels * 0.85).toInt(),
                 WindowManager.LayoutParams.WRAP_CONTENT
             )
             setGravity(Gravity.CENTER)
-            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0.6f)
         }
 
-        dialog.show()
+        // Botones de confirmación
+        confirmView.findViewById<Button>(R.id.btnCancelar).setOnClickListener {
+            dialogConfirm.dismiss()
+        }
+
+        confirmView.findViewById<Button>(R.id.btnContinuar).setOnClickListener {
+            dialogConfirm.dismiss()
+
+            // Aquí restamos puntos y marcamos la ayuda como usada
+            puntos -= 10
+            pistaUsada = true
+            binding.txtPuntos.text = "Puntos: $puntos"
+
+            // Elegimos letra aleatoria no adivinada
+            val letrasDisponibles = palabraActual.toSet().filter { it !in letrasAdivinadas }
+            if (letrasDisponibles.isEmpty()) {
+                mostrarModalAdvertencia("Ya descubriste todas las letras de la palabra.")
+                return@setOnClickListener
+            }
+            val letraAyuda = letrasDisponibles.random()
+
+            // Mostramos el diálogo de ayuda con la letra
+            val ayudaView = LayoutInflater.from(this).inflate(R.layout.dialog_ayuda, null)
+            val txtAyuda = ayudaView.findViewById<TextView>(R.id.txtAyuda)
+            txtAyuda.text = "¡Ayuda! Una letra de la palabra es: $letraAyuda"
+
+            val dialogAyuda = AlertDialog.Builder(this, R.style.CustomAlertDialogStyle)
+                .setView(ayudaView)
+                .setCancelable(true)
+                .create()
+
+            dialogAyuda.window?.apply {
+                setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                setLayout(
+                    (resources.displayMetrics.widthPixels * 0.85).toInt(),
+                    WindowManager.LayoutParams.WRAP_CONTENT
+                )
+                setGravity(Gravity.CENTER)
+                setDimAmount(0.6f)
+            }
+
+            dialogAyuda.show()
+        }
+
+        dialogConfirm.show()
     }
+
 
     // Desactiva todo el teclado (tras victoria o derrota)
     private fun desactivarTeclado() {
@@ -324,5 +361,7 @@ class ModoClasicoActivity : AppCompatActivity() {
 
         dialog.show()
     }
+
+
 
 }
