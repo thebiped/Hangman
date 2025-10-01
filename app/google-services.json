@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "729809413898",
-    "project_id": "hangman-game-a6826",
-    "storage_bucket": "hangman-game-a6826.firebasestorage.app"
+    "project_number": "870714386643",
+    "project_id": "hangman-91b33",
+    "storage_bucket": "hangman-91b33.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:729809413898:android:95e2e6c7218bdbd6c83cf3",
+        "mobilesdk_app_id": "1:870714386643:android:f48fffac2c8d8223624c26",
         "android_client_info": {
           "package_name": "com.example.hangman"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyA35AkbmYo2OdZpCKzwa8BfNSF3Tx51oDw"
+          "current_key": "AIzaSyBN5xcVMWvk7UW0Z81rZBJqxjqvxqaG_F8"
         }
       ],
       "services": {

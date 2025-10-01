@@ -20,6 +20,8 @@ import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class ModoClasicoActivity : AppCompatActivity() {
 
@@ -246,6 +248,7 @@ class ModoClasicoActivity : AppCompatActivity() {
             puntos += 10
             binding.txtPuntos.text = "Puntos: $puntos"
             mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntos = 10, gano = true)
+            guardarPartida("ganada", 10, palabraActual, 0)
         }
     }
 
@@ -255,6 +258,7 @@ class ModoClasicoActivity : AppCompatActivity() {
             desactivarTeclado()
             binding.txtPalabra.text = palabraActual.toCharArray().joinToString(" ")
             mostrarDialogoResultado("Perdiste. La palabra era: $palabraActual", gano = false)
+            guardarPartida("perdida", 0, palabraActual, 0)
         }
     }
 
@@ -360,6 +364,19 @@ class ModoClasicoActivity : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+    private fun guardarPartida(resultado: String, puntosGanados: Int, palabra: String, duracion: Int) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val partida = Partida(uid, resultado, palabra, puntosGanados, duracion, System.currentTimeMillis())
+
+        FirebaseFirestore.getInstance().collection("partidas")
+            .add(partida)
+            .addOnSuccessListener {
+                // Se guardó bien
+            }
+            .addOnFailureListener {
+                // Manejo de error
+            }
     }
 
 
