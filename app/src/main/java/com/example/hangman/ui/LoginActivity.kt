@@ -1,25 +1,21 @@
 package com.example.hangman.ui
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
 import com.airbnb.lottie.LottieAnimationView
 import com.example.hangman.R
 import com.example.hangman.WelcomeActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         super.onCreate(savedInstanceState)
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         setContentView(R.layout.activity_login)
 
         // Referencias a los campos y botones del layout
@@ -33,38 +29,59 @@ class LoginActivity : AppCompatActivity() {
 
         // Navegación a pantalla de registro
         registroText.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, RegisterActivity::class.java))
             overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
         }
 
-        // Manejo de login y animación modal éxito
+        // Manejo de login
         loginButton.setOnClickListener {
             val email = emailInput.text.toString()
             val pass = passwordInput.text.toString()
 
             if (email.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show()
-            } else {
-                // Mostrar modal animado solo si no está creado aún
-                if (modalView == null) {
-                    modalView = layoutInflater.inflate(R.layout.dialog_login_success, rootView, false)
-                    rootView.addView(modalView)
-                }
-                modalView?.visibility = View.VISIBLE
-                modalView?.alpha = 0f
-                modalView?.animate()?.alpha(1f)?.setDuration(500)?.start()
-
-                // Reproducir animación Lottie
-                val lottieView = modalView?.findViewById<LottieAnimationView>(R.id.loadingLottie)
-                lottieView?.playAnimation()
-
-                // Después de 2 segundos redirigir a WelcomeActivity y cerrar login
-                modalView?.postDelayed({
-                    startActivity(Intent(this, WelcomeActivity::class.java))
-                    finish()
-                }, 2000)
+                return@setOnClickListener
             }
+
+            // Mostrar modal animado
+            if (modalView == null) {
+                modalView = layoutInflater.inflate(R.layout.dialog_login_success, rootView, false)
+                rootView.addView(modalView)
+            }
+            modalView?.visibility = View.VISIBLE
+            modalView?.alpha = 0f
+            modalView?.animate()?.alpha(1f)?.setDuration(500)?.start()
+            modalView?.findViewById<LottieAnimationView>(R.id.loadingLottie)?.playAnimation()
+
+            // Login con Firebase Authentication
+            FirebaseAuth.getInstance()
+                .signInWithEmailAndPassword(email, pass)
+                .addOnSuccessListener { authResult ->
+                    val uid = authResult.user?.uid ?: return@addOnSuccessListener
+
+                    // Obtener datos del usuario desde Firestore
+                    FirebaseFirestore.getInstance().collection("usuarios")
+                        .document(uid)
+                        .get()
+                        .addOnSuccessListener { document ->
+                            if (document != null && document.exists()) {
+                                val nombre = document.getString("nombreUsuario") ?: ""
+                                Toast.makeText(this, "Bienvenido $nombre", Toast.LENGTH_SHORT).show()
+
+                                // Redirigir a WelcomeActivity
+                                modalView?.postDelayed({
+                                    startActivity(Intent(this, WelcomeActivity::class.java))
+                                    finish()
+                                }, 2000)
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Error al obtener datos: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(this, "Error al iniciar sesión: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
         }
     }
 }
