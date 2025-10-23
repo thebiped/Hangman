@@ -17,9 +17,10 @@ import androidx.appcompat.app.AppCompatActivity
 
 class WelcomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Inicializa la pantalla de bienvenida
         super.onCreate(savedInstanceState)
 
-        // Crear layout principal con fondo degradado y orientación vertical centrada
+        // Configura el layout principal y fondo degradado
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -33,24 +34,23 @@ class WelcomeActivity : AppCompatActivity() {
             )
         }
 
-        // Imagen del logo con tamaño fijo y margen inferior
+        // Configura logo y contenedor de texto
         val logoImage = ImageView(this).apply {
-            setImageResource(R.drawable.logo_hangman)
+            setImageResource(R.drawable.logo)
             layoutParams = LinearLayout.LayoutParams(200, 200).apply {
                 bottomMargin = 24
             }
         }
 
-        // Contenedor horizontal para las letras animadas del texto
         val textContainer = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
 
+        // Animaciones de texto de bienvenida
+
         val texto = "¡Bienvenido, biped!"
         val letras = mutableListOf<TextView>()
-
-        // Crear TextViews para cada letra con animación de escala y aparición con retraso
         for ((i, char) in texto.withIndex()) {
             val letraView = TextView(this).apply {
                 text = char.toString()
@@ -79,12 +79,12 @@ class WelcomeActivity : AppCompatActivity() {
             textContainer.addView(letraView)
         }
 
-        // Añadir logo y texto animado al layout principal
+        // Agrega vistas al layout
         layout.addView(logoImage)
         layout.addView(textContainer)
         setContentView(layout)
 
-        // Animación de escala para el logo al inicio
+        // Animación inicial del logo
         val scaleLogo = ScaleAnimation(
             3f, 1f, 3f, 1f,
             ScaleAnimation.RELATIVE_TO_SELF, 0.5f,
@@ -95,7 +95,7 @@ class WelcomeActivity : AppCompatActivity() {
         }
         logoImage.startAnimation(scaleLogo)
 
-        // Después de la animación, realizar fade-out y redirigir a la siguiente actividad
+        // Transición final y redirección a la actividad principal
         Handler().postDelayed({
             val fadeOut = AlphaAnimation(1f, 0f).apply {
                 duration = 800

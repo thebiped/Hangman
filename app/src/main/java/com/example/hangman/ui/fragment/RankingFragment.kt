@@ -21,9 +21,12 @@ private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
 
 class RankingFragment : Fragment() {
+
+    //Declarar variables
     private var param1: String? = null
     private var param2: String? = null
 
+    //Inicializa el fragmento y recupera los argumentos pasados
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
@@ -32,13 +35,13 @@ class RankingFragment : Fragment() {
         }
     }
 
+    //Configura la interacción principal
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_ranking, container, false)
 
-        // Botón para cerrar sesión
         view.findViewById<AppCompatButton>(R.id.btnCerrarSesion).setOnClickListener {
             mostrarDialogoCerrarSesion()
         }
@@ -46,6 +49,7 @@ class RankingFragment : Fragment() {
         return view
     }
 
+    //Recibe param1 y param2 y los agrega a los argumentos del fragmento
     companion object {
         @JvmStatic
         fun newInstance(param1: String, param2: String) =
@@ -57,6 +61,7 @@ class RankingFragment : Fragment() {
             }
     }
 
+    // Modal de confirmación de cierre de sesión
     private fun mostrarDialogoCerrarSesion() {
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_logout, null)
 
@@ -65,7 +70,6 @@ class RankingFragment : Fragment() {
             .setCancelable(false)
             .create()
 
-        // Aplica blur o baja opacidad al fondo del modal
         val rootView = requireActivity().window.decorView.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             rootView.setRenderEffect(RenderEffect.createBlurEffect(8f, 8f, Shader.TileMode.CLAMP))
@@ -74,7 +78,6 @@ class RankingFragment : Fragment() {
         }
 
         dialog.setOnDismissListener {
-            // Quita el efecto blur o restaura la opacidad
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 rootView.setRenderEffect(null)
             } else {
@@ -91,7 +94,6 @@ class RankingFragment : Fragment() {
 
         dialog.show()
 
-        // Animación y acción para cerrar sesión
         view.findViewById<Button>(R.id.btnCerrarSesion).setOnClickListener {
             val fadeOut = android.view.animation.AnimationUtils.loadAnimation(requireContext(), R.anim.fade_out)
             view.startAnimation(fadeOut)
@@ -105,7 +107,6 @@ class RankingFragment : Fragment() {
             })
         }
 
-        // Cierre simple del modal sin cerrar sesión
         view.findViewById<ImageButton>(R.id.btnCerrarModal).setOnClickListener {
             dialog.dismiss()
         }
@@ -114,8 +115,8 @@ class RankingFragment : Fragment() {
         }
     }
 
+    // Cierra sesión y limpiar las preferencias
     private fun cerrarSesion() {
-        // Limpia datos guardados y vuelve al login limpiando la pila
         val sharedPref = requireActivity().getSharedPreferences("user_prefs", 0)
         sharedPref.edit().clear().apply()
 

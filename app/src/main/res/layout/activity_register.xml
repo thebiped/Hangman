@@ -12,6 +12,7 @@
         android:layout_height="wrap_content"
         android:padding="32dp">
 
+        <!-- Título principal -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -21,6 +22,8 @@
             android:textColor="@color/textWhite"
             android:layout_marginTop="80dp"
             android:layout_marginBottom="32dp" />
+
+        <!-- Label Nombre de usuario -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -29,6 +32,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="4dp"/>
 
+        <!-- Input Nombre -->
         <EditText
             android:id="@+id/usernameEditText"
             android:layout_width="match_parent"
@@ -42,6 +46,7 @@
             android:textColorHint="@color/hintGray"
             android:textColor="@color/textWhite"/>
 
+        <!-- Label Email -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -50,6 +55,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="4dp"/>
 
+        <!-- Input Email -->
         <EditText
             android:id="@+id/emailEditText"
             android:layout_width="match_parent"
@@ -63,6 +69,7 @@
             android:textColor="@color/textWhite"
             android:textColorHint="@color/hintGray" />
 
+        <!-- Label Contraseña -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -71,6 +78,7 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="4dp"/>
 
+        <!-- Input Contraseña -->
         <EditText
             android:id="@+id/passwordEditText"
             android:layout_width="match_parent"
@@ -84,6 +92,7 @@
             android:textColor="@color/textWhite"
             android:textColorHint="@color/hintGray" />
 
+        <!-- Label Confirmar Contraseña -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -92,6 +101,7 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="4dp"/>
 
+        <!-- Input Confirmar Contraseña -->
         <EditText
             android:id="@+id/confirmPasswordEditText"
             android:layout_width="match_parent"
@@ -105,6 +115,7 @@
             android:textColor="@color/textWhite"
             android:textColorHint="@color/hintGray" />
 
+        <!-- Botón Registrarse -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/registerButton"
             android:text="Crear cuenta"
@@ -123,6 +134,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
+        <!-- Link Iniciar sesión -->
         <TextView
             android:id="@+id/goLoginText"
             android:text="inicia sesión"

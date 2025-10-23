@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     android:background="@color/backgroundDark">
 
-    <!-- Scroll general -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -20,7 +19,6 @@
             android:layout_height="wrap_content"
             android:layout_margin="24dp">
 
-            <!-- Header con título y botón -->
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -28,7 +26,6 @@
                 android:layout_marginBottom="16dp"
                 android:paddingVertical="8dp">
 
-                <!-- Contenedor de perfil -->
                 <LinearLayout
                     android:id="@+id/profileContainer"
                     android:layout_width="wrap_content"
@@ -54,7 +51,6 @@
                         android:textStyle="bold"/>
                 </LinearLayout>
 
-                <!-- Botón de cerrar sesión alineado a la derecha -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnCerrarSesion"
                     android:layout_width="wrap_content"
@@ -71,8 +67,7 @@
                     android:layout_centerVertical="true"/>
             </RelativeLayout>
 
-
-            <!-- Imagen y nombre -->
+            <!-- Información de usuario -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -117,7 +112,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Botón editar -->
+            <!-- Botón para editar perfil -->
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnEditarPerfil"
                 android:layout_width="match_parent"
@@ -127,7 +122,6 @@
                 android:background="@drawable/btn_edit_profile"
                 android:layout_marginTop="16dp" />
 
-            <!-- Nivel -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -136,6 +130,7 @@
                 android:textSize="14sp"
                 android:layout_marginTop="24dp" />
 
+            <!-- Barra de nivel -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="24dp"
@@ -159,7 +154,6 @@
                     android:layout_height="wrap_content" />
             </RelativeLayout>
 
-            <!-- Estadísticas -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -168,6 +162,7 @@
                 android:textSize="14sp"
                 android:layout_marginTop="24dp" />
 
+            <!-- Estadísticas -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -179,7 +174,6 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <!-- Card 1 -->
                     <LinearLayout
                         android:layout_weight="1"
                         android:orientation="vertical"
@@ -210,7 +204,6 @@
                             android:textSize="14sp"/>
                     </LinearLayout>
 
-                    <!-- Card 2 -->
                     <LinearLayout
                         android:layout_weight="1"
                         android:orientation="vertical"
@@ -247,7 +240,6 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <!-- Card 3 -->
                     <LinearLayout
                         android:layout_weight="1"
                         android:orientation="vertical"
@@ -278,7 +270,6 @@
                             android:textSize="14sp"/>
                     </LinearLayout>
 
-                    <!-- Card 4 -->
                     <LinearLayout
                         android:layout_weight="1"
                         android:orientation="vertical"
@@ -311,7 +302,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Últimas partidas -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -321,7 +311,7 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Partida 1 -->
+            <!-- Últimas partidas -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -358,7 +348,6 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Partida 2 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

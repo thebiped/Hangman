@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="@color/backgroundDark">
 
-    <!-- Scroll general -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -26,7 +25,7 @@
                 android:layout_marginBottom="16dp"
                 android:paddingVertical="8dp">
 
-                <!-- Contenedor de puntos -->
+                <!-- Contenedor de puntos del jugador -->
                 <LinearLayout
                     android:id="@+id/pointsContainer"
                     android:layout_width="wrap_content"
@@ -53,11 +52,11 @@
                         android:textSize="14sp"/>
                 </LinearLayout>
 
-                <!-- Botón de cerrar sesión alineado a la derecha -->
+                <!-- Botón cerrar sesión -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnCerrarSesion"
                     android:layout_width="48dp"
-                    android:layout_height="42dp"
+                    android:layout_height="48dp"
                     android:background="@drawable/bg_logout"
                     android:contentDescription="Cerrar sesión"
                     android:drawableStart="@drawable/ic_logout"
@@ -68,8 +67,7 @@
                     android:layout_centerVertical="true"/>
             </RelativeLayout>
 
-
-            <!-- Título -->
+            <!-- Título tabla de ranking -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -93,7 +91,7 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <!-- Fondo de la tabla -->
+            <!-- Contenedor de la tabla de ranking -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -101,7 +99,7 @@
                 android:background="@drawable/bg_tabla_ranking"
                 android:padding="8dp">
 
-                <!-- Header de la tabla -->
+                <!-- Header de columnas -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -150,6 +148,8 @@
                         android:layout_weight="1.5"
                         android:gravity="center" />
                 </LinearLayout>
+                <!-- Filas de ranking -->
+
                 <include
                     layout="@layout/ranking_item" />
                 <include

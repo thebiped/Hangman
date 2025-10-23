@@ -20,11 +20,10 @@ import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.content.ContextCompat
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
 class ModoClasicoActivity : AppCompatActivity() {
 
+    //Declarar Variables
     private lateinit var binding: ActivityModoClasicoBinding
     private var palabraActual = ""
     private val letrasAdivinadas = mutableSetOf<Char>()
@@ -39,13 +38,14 @@ class ModoClasicoActivity : AppCompatActivity() {
         binding = ActivityModoClasicoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Configuración inicial del juego
         binding.btnAyuda.setOnClickListener { mostrarPista() }
-        startGame()   // Inicializa juego
+        startGame()
         binding.btnPausa.setOnClickListener { mostrarDialogoPausa() }
         binding.txtPuntos.text = "Puntos: $puntos"
     }
 
-    // Inicia o reinicia la ronda con palabra nueva y teclado fresco
+    //Inicio del juego
     private fun startGame() {
         palabraActual = Words.getWordsByDifficulty(nivelActual).random().uppercase()
         letrasAdivinadas.clear()
@@ -58,7 +58,7 @@ class ModoClasicoActivity : AppCompatActivity() {
         generarTeclado()
     }
 
-    // Muestra la palabra con letras adivinadas y guiones bajos
+    // Actualiza la palabra mostrada al usuario
     private fun actualizarPalabraMostrada() {
         val mostrada = palabraActual.map { c ->
             if (letrasAdivinadas.contains(c)) c else '_'
@@ -66,7 +66,7 @@ class ModoClasicoActivity : AppCompatActivity() {
         binding.txtPalabra.text = mostrada
     }
 
-    // Crea teclado dinámico con letras para que usuario pulse
+    // Genera el teclado y sus interacciones
     private fun generarTeclado() {
         val tecladoContainer = binding.keyboardContainer
         tecladoContainer.removeAllViews()
@@ -122,7 +122,7 @@ class ModoClasicoActivity : AppCompatActivity() {
         }
     }
 
-    // Maneja la lógica al presionar una letra
+    // Maneja la acción de presionar una letra
     private fun manejarLetra(letra: Char, boton: MaterialButton) {
         boton.isEnabled = false
         boton.alpha = 0.5f
@@ -140,14 +140,14 @@ class ModoClasicoActivity : AppCompatActivity() {
         }
     }
 
-    // Actualiza la imagen del ahorcado según fallos
+    // Actualiza la imagen del ahorcado
     private fun updateHangman() {
         val fallos = 8 - intentosRestantes
         val resId = resources.getIdentifier("ahorcado_$fallos", "drawable", packageName)
         if (resId != 0) binding.imgAhorcado.setImageResource(resId)
     }
 
-    // Muestra pista si hay puntos y no se usó aún
+    // Muestra la pista con confirmación
     @SuppressLint("MissingInflatedId")
     private fun mostrarPista() {
         if (pistaUsada) {
@@ -161,7 +161,7 @@ class ModoClasicoActivity : AppCompatActivity() {
         }
 
         // Primero mostramos el diálogo de confirmación
-        val confirmView = LayoutInflater.from(this).inflate(R.layout.dialog_confirmacion_ayuda, null)
+        val confirmView = LayoutInflater.from(this).inflate(R.layout.dialog_confirm, null)
         val dialogConfirm = AlertDialog.Builder(this, R.style.CustomAlertDialogStyle)
             .setView(confirmView)
             .setCancelable(false)
@@ -177,7 +177,6 @@ class ModoClasicoActivity : AppCompatActivity() {
             setDimAmount(0.6f)
         }
 
-        // Botones de confirmación
         confirmView.findViewById<Button>(R.id.btnCancelar).setOnClickListener {
             dialogConfirm.dismiss()
         }
@@ -185,12 +184,10 @@ class ModoClasicoActivity : AppCompatActivity() {
         confirmView.findViewById<Button>(R.id.btnContinuar).setOnClickListener {
             dialogConfirm.dismiss()
 
-            // Aquí restamos puntos y marcamos la ayuda como usada
             puntos -= 10
             pistaUsada = true
             binding.txtPuntos.text = "Puntos: $puntos"
 
-            // Elegimos letra aleatoria no adivinada
             val letrasDisponibles = palabraActual.toSet().filter { it !in letrasAdivinadas }
             if (letrasDisponibles.isEmpty()) {
                 mostrarModalAdvertencia("Ya descubriste todas las letras de la palabra.")
@@ -198,7 +195,6 @@ class ModoClasicoActivity : AppCompatActivity() {
             }
             val letraAyuda = letrasDisponibles.random()
 
-            // Mostramos el diálogo de ayuda con la letra
             val ayudaView = LayoutInflater.from(this).inflate(R.layout.dialog_ayuda, null)
             val txtAyuda = ayudaView.findViewById<TextView>(R.id.txtAyuda)
             txtAyuda.text = "¡Ayuda! Una letra de la palabra es: $letraAyuda"
@@ -224,8 +220,7 @@ class ModoClasicoActivity : AppCompatActivity() {
         dialogConfirm.show()
     }
 
-
-    // Desactiva todo el teclado (tras victoria o derrota)
+    // Desactiva todo el teclado
     private fun desactivarTeclado() {
         for (i in 0 until binding.keyboardContainer.childCount) {
             val fila = binding.keyboardContainer.getChildAt(i)
@@ -248,7 +243,6 @@ class ModoClasicoActivity : AppCompatActivity() {
             puntos += 10
             binding.txtPuntos.text = "Puntos: $puntos"
             mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntos = 10, gano = true)
-            guardarPartida("ganada", 10, palabraActual, 0)
         }
     }
 
@@ -258,13 +252,12 @@ class ModoClasicoActivity : AppCompatActivity() {
             desactivarTeclado()
             binding.txtPalabra.text = palabraActual.toCharArray().joinToString(" ")
             mostrarDialogoResultado("Perdiste. La palabra era: $palabraActual", gano = false)
-            guardarPartida("perdida", 0, palabraActual, 0)
         }
     }
 
-    // Muestra modal con resultado final y opciones continuar o salir
+    // Muestra un modal de resultado
     private fun mostrarDialogoResultado(mensaje: String, puntos: Int = 0, gano: Boolean = false) {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_resultado, null)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_result, null)
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .setCancelable(false)
@@ -308,7 +301,7 @@ class ModoClasicoActivity : AppCompatActivity() {
         desactivarTeclado()
     }
 
-    // Muestra diálogo de pausa con opciones para continuar, resetear o salir
+    // Muestra el modal de pausa
     @SuppressLint("MissingInflatedId")
     private fun mostrarDialogoPausa() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_pausa, null)
@@ -336,9 +329,9 @@ class ModoClasicoActivity : AppCompatActivity() {
         }
     }
 
-    // Muestra advertencia modal para alertas simples
+    // Muestra advertencias simples
     private fun mostrarModalAdvertencia(mensaje: String) {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_advertencia, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_warm, null)
         val txtMensaje = view.findViewById<TextView>(R.id.txtMensajeAdvertencia)
         val btnCerrar = view.findViewById<Button>(R.id.btnCerrar)
 
@@ -364,19 +357,6 @@ class ModoClasicoActivity : AppCompatActivity() {
         }
 
         dialog.show()
-    }
-    private fun guardarPartida(resultado: String, puntosGanados: Int, palabra: String, duracion: Int) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val partida = Partida(uid, resultado, palabra, puntosGanados, duracion, System.currentTimeMillis())
-
-        FirebaseFirestore.getInstance().collection("partidas")
-            .add(partida)
-            .addOnSuccessListener {
-                // Se guardó bien
-            }
-            .addOnFailureListener {
-                // Manejo de error
-            }
     }
 
 

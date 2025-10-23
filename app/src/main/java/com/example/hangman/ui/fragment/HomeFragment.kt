@@ -12,36 +12,48 @@ import android.view.*
 import android.view.animation.Animation
 import android.widget.Button
 import android.widget.ImageButton
-import androidx.appcompat.widget.AppCompatButton
 import androidx.fragment.app.Fragment
 import com.example.hangman.ModoClasicoActivity
+import com.example.hangman.ModoContraRelojActivity
 import com.example.hangman.R
+import com.example.hangman.TematicaActivity
 import com.example.hangman.ui.LoginActivity
 
 class HomeFragment : Fragment() {
 
+    // Inflamos el layout del fragmento
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-        // Botón para iniciar juego clásico
+        // Botón para jugar en modo clásico
         val btnJugarClasico = view.findViewById<Button>(R.id.btnJugarClasico)
         btnJugarClasico.setOnClickListener {
             val intent = Intent(requireContext(), ModoClasicoActivity::class.java)
             startActivity(intent)
         }
 
-        // Botón para cerrar sesión, que muestra un diálogo de confirmación
-        val btnCerrarSesion = view.findViewById<AppCompatButton>(R.id.btnCerrarSesion)
-        btnCerrarSesion.setOnClickListener {
-            mostrarDialogoCerrarSesion()
+        // Botón para jugar en modo temático
+        val btnModoTematico = view.findViewById<Button>(R.id.btnModoTematico)
+        btnModoTematico.setOnClickListener {
+            val intent = Intent(requireContext(), TematicaActivity::class.java)
+            startActivity(intent)
         }
+
+        // Botón para jugar en modo contrarreloj
+        val btnModoReloj = view.findViewById<Button>(R.id.btnModoReloj)
+        btnModoReloj.setOnClickListener {
+            val intent = Intent(requireContext(), ModoContraRelojActivity::class.java)
+            startActivity(intent)
+        }
+
 
         return view
     }
 
+    // Muestra un modal personalizado para cerrar sesión
     private fun mostrarDialogoCerrarSesion() {
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_logout, null)
 
@@ -50,7 +62,6 @@ class HomeFragment : Fragment() {
             .setCancelable(false)
             .create()
 
-        // Aplica blur al fondo en Android 12+ o reduce opacidad en versiones anteriores
         val rootView = requireActivity().window.decorView.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             rootView.setRenderEffect(RenderEffect.createBlurEffect(8f, 8f, Shader.TileMode.CLAMP))
@@ -58,7 +69,6 @@ class HomeFragment : Fragment() {
             rootView.alpha = 0.7f
         }
 
-        // Restaurar estado del fondo al cerrar el diálogo
         dialog.setOnDismissListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 rootView.setRenderEffect(null)
@@ -76,7 +86,6 @@ class HomeFragment : Fragment() {
 
         dialog.show()
 
-        // Animación de salida y cierre de sesión cuando se confirma
         view.findViewById<Button>(R.id.btnCerrarSesion).setOnClickListener {
             val fadeOut = android.view.animation.AnimationUtils.loadAnimation(requireContext(), R.anim.fade_out)
             view.startAnimation(fadeOut)
@@ -92,7 +101,6 @@ class HomeFragment : Fragment() {
             })
         }
 
-        // Cierre del diálogo sin cerrar sesión
         view.findViewById<ImageButton>(R.id.btnCerrarModal).setOnClickListener {
             dialog.dismiss()
         }
@@ -101,8 +109,8 @@ class HomeFragment : Fragment() {
         }
     }
 
+    // Cierra sesión y limpiar las preferencias
     private fun cerrarSesion() {
-        // Limpia datos guardados y redirige a LoginActivity, cerrando todas las actividades anteriores
         val sharedPref = requireActivity().getSharedPreferences("user_prefs", 0)
         sharedPref.edit().clear().apply()
 

@@ -19,40 +19,41 @@ import com.example.hangman.R
 
 class ProfileFragment : Fragment() {
 
+    //Declarar variables
     private val PICK_IMAGE = 100
     private var selectedImageUri: Uri? = null
-
-    // referencias al fragment
     private lateinit var txtNombre: TextView
     private lateinit var txtDescripcion: TextView
     private lateinit var imgPerfil: ImageView
 
+    // Inflamos el layout del fragmento
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? = inflater.inflate(R.layout.fragment_profile, container, false)
 
+    // Se ejecuta después de inflar la vista
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Inicializamos referencias
         txtNombre = view.findViewById(R.id.txtNombre)
         txtDescripcion = view.findViewById(R.id.txtDescripcion)
         imgPerfil = view.findViewById(R.id.imgPerfil)
 
-        // Botón para editar perfil
+        //Botón para abrir el modal de editar perfil
         view.findViewById<Button>(R.id.btnEditarPerfil).setOnClickListener {
             mostrarDialogoEditarPerfil()
         }
 
-        // Botón para cerrar sesión
+        //Cierra sesión y te redirige al principio
         view.findViewById<AppCompatButton>(R.id.btnCerrarSesion).setOnClickListener {
             mostrarDialogoEditarPerfil()
         }
     }
 
+    // Muestra un modal para editar perfil
     private fun mostrarDialogoEditarPerfil() {
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_editar_perfil, null)
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_profile, null)
 
         val dialog = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
             .setView(view)
@@ -73,24 +74,20 @@ class ProfileFragment : Fragment() {
         val etNombre = view.findViewById<EditText>(R.id.etNombre)
         val etDescripcion = view.findViewById<EditText>(R.id.etDescripcion)
 
-        // Mostrar datos actuales en el modal
         etNombre.setText(txtNombre.text)
         etDescripcion.setText(txtDescripcion.text)
         selectedImageUri?.let { imgPerfilModal.setImageURI(it) }
 
-        // Cambiar foto
         btnCambiarFoto.setOnClickListener {
             val gallery = Intent(Intent.ACTION_PICK)
             gallery.type = "image/*"
             startActivityForResult(gallery, PICK_IMAGE)
         }
 
-        // Cerrar modal
         view.findViewById<ImageButton>(R.id.btnCerrarModal).setOnClickListener {
             dialog.dismiss()
         }
 
-        // Confirmar cambios
         view.findViewById<Button>(R.id.btnConfirmar).setOnClickListener {
             val nuevoNombre = etNombre.text.toString()
             val nuevaDescripcion = etDescripcion.text.toString()
@@ -107,6 +104,7 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    // Recibe resultado de la selección de imagen
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK) {

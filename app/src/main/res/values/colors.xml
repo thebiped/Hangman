@@ -27,16 +27,15 @@
 
     <color name="purpleCard">#4C1D95</color>
     <color name="blueCard">#2563EB</color>
+
     <color name="buttonBlue">#1E40AF</color>
     <color name="buttonDisabled">#334155</color>
-    <!--buttons Menu-->
     <color name="btnMenuRegister">#DA3CB0</color>
     <color name="btnMenuLogin">#4E5ED7</color>
     <color name="gray_disabled">#BDBDBD</color>
     <color name="blue_enabled">#2196F3</color>
 
 
-    <!--bordes Menu-->
     <color name="stokeMenu_Register">#9008FF</color>
     <color name="stokeMenu_Login">#008CFF</color>
 

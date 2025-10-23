@@ -14,15 +14,13 @@ class NavbarBottomActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Inflar layout con ViewBinding
         binding = ActivityNavbarbottomBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Cargar fragmento inicial (Home)
+        // Configura la pantalla inicial y el fragment por defecto
         replaceFragment(HomeFragment())
 
-        // Manejar selección del bottom navigation y reemplazar fragmentos según opción
+        // Configura la navegación inferior y cambios de fragment
         binding.bottomNavigation.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.nav_home -> replaceFragment(HomeFragment())
@@ -33,7 +31,7 @@ class NavbarBottomActivity : AppCompatActivity() {
         }
     }
 
-    // Función para reemplazar fragmento dentro del contenedor
+    // Reemplaza el fragment mostrado
     private fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
