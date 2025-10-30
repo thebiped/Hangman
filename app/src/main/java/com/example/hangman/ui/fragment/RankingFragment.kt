@@ -1,128 +1,107 @@
 package com.example.hangman.ui.fragment
 
-import android.app.AlertDialog
-import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.RenderEffect
-import android.graphics.Shader
-import android.graphics.drawable.ColorDrawable
-import android.os.Build
 import android.os.Bundle
-import android.view.*
-import android.view.animation.Animation
-import android.widget.Button
-import android.widget.ImageButton
-import androidx.appcompat.widget.AppCompatButton
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.example.hangman.R
-import com.example.hangman.ui.LoginActivity
-
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+import com.example.hangman.data.FirebaseService
+import com.example.hangman.models.UsuarioRanking
 
 class RankingFragment : Fragment() {
 
-    //Declarar variables
-    private var param1: String? = null
-    private var param2: String? = null
+    private lateinit var contenedorRanking: LinearLayout
 
-    //Inicializa el fragmento y recupera los argumentos pasados
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
-
-    //Configura la interacción principal
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_ranking, container, false)
-
-        view.findViewById<AppCompatButton>(R.id.btnCerrarSesion).setOnClickListener {
-            mostrarDialogoCerrarSesion()
+        // Agregamos un LinearLayout vacío que será el contenedor dinámico
+        contenedorRanking = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         }
 
+        val tablaRanking = view.findViewById<LinearLayout>(R.id.contenedorTablaRanking)
+        tablaRanking.addView(contenedorRanking)
+
+        cargarRanking()
         return view
     }
 
-    //Recibe param1 y param2 y los agrega a los argumentos del fragmento
-    companion object {
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            RankingFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    private fun cargarRanking() {
+        FirebaseService.getRanking(
+            onComplete = { listaUsuarios ->
+                contenedorRanking.removeAllViews()
+
+                for ((index, user) in listaUsuarios.withIndex()) {
+                    val item = layoutInflater.inflate(R.layout.ranking_item, contenedorRanking, false)
+
+                    val txtPosicion = item.findViewById<TextView>(R.id.tvPosicion)
+                    val txtNombre = item.findViewById<TextView>(R.id.tvNombreJugador)
+                    val txtPuntos = item.findViewById<TextView>(R.id.tvPuntos)
+                    val txtBonus = item.findViewById<TextView>(R.id.tvBonus)
+                    val txtTotal = item.findViewById<TextView>(R.id.tvTotal)
+                    val imgPerfil = item.findViewById<ImageView>(R.id.imgAvatar)
+
+                    txtPosicion.text = "#${index + 1}"
+                    txtNombre.text = user.nombreUsuario
+                    txtPuntos.text = "${user.partidasGanadas}" // WIN
+                    txtBonus.text = "${user.partidasPerdidas}" // Lose
+                    txtTotal.text = "${user.puntuacionTotal} pts"
+
+                    if (!user.imagenPerfil.isNullOrEmpty()) {
+                        Glide.with(this).load(user.imagenPerfil).into(imgPerfil)
+                    } else {
+                        imgPerfil.setImageBitmap(generateInitialsAvatar(user.nombreUsuario))
+                    }
+
+                    contenedorRanking.addView(item)
                 }
+            },
+            onError = { e ->
+                e.printStackTrace()
             }
+        )
     }
 
-    // Modal de confirmación de cierre de sesión
-    private fun mostrarDialogoCerrarSesion() {
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_logout, null)
-
-        val dialog = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
-            .setView(view)
-            .setCancelable(false)
-            .create()
-
-        val rootView = requireActivity().window.decorView.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            rootView.setRenderEffect(RenderEffect.createBlurEffect(8f, 8f, Shader.TileMode.CLAMP))
-        } else {
-            rootView.alpha = 0.7f
+    private fun generateInitialsAvatar(name: String): Bitmap {
+        val initials = name.split(" ").mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("").take(2)
+        val size = 150
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        val paint = android.graphics.Paint().apply {
+            color = Color.parseColor("#8B5CF6")
+            style = android.graphics.Paint.Style.FILL
+            isAntiAlias = true
+            textSize = 60f
+            textAlign = android.graphics.Paint.Align.CENTER
         }
-
-        dialog.setOnDismissListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                rootView.setRenderEffect(null)
-            } else {
-                rootView.alpha = 1f
-            }
-        }
-
-        dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            setLayout((resources.displayMetrics.widthPixels * 0.85).toInt(), WindowManager.LayoutParams.WRAP_CONTENT)
-            setGravity(Gravity.CENTER)
-            setDimAmount(0.6f)
-        }
-
-        dialog.show()
-
-        view.findViewById<Button>(R.id.btnCerrarSesion).setOnClickListener {
-            val fadeOut = android.view.animation.AnimationUtils.loadAnimation(requireContext(), R.anim.fade_out)
-            view.startAnimation(fadeOut)
-            fadeOut.setAnimationListener(object : Animation.AnimationListener {
-                override fun onAnimationStart(animation: Animation?) {}
-                override fun onAnimationRepeat(animation: Animation?) {}
-                override fun onAnimationEnd(animation: Animation?) {
-                    dialog.dismiss()
-                    cerrarSesion()
-                }
-            })
-        }
-
-        view.findViewById<ImageButton>(R.id.btnCerrarModal).setOnClickListener {
-            dialog.dismiss()
-        }
-        view.findViewById<Button>(R.id.btnCancelar).setOnClickListener {
-            dialog.dismiss()
-        }
+        canvas.drawColor(Color.parseColor("#8B5CF6"))
+        canvas.drawText(initials, size / 2f, size / 1.5f, paint)
+        return bmp
     }
 
-    // Cierra sesión y limpiar las preferencias
-    private fun cerrarSesion() {
-        val sharedPref = requireActivity().getSharedPreferences("user_prefs", 0)
-        sharedPref.edit().clear().apply()
-
-        val intent = Intent(requireContext(), LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        requireActivity().finish()
+    private fun calcularNivel(puntos: Long): Int {
+        return when {
+            puntos < 100 -> 1
+            puntos < 250 -> 2
+            puntos < 500 -> 3
+            puntos < 1000 -> 4
+            puntos < 2000 -> 5
+            else -> 6
+        }
     }
 }

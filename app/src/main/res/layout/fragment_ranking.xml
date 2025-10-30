@@ -9,7 +9,6 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/bottomNavigation"
         tools:ignore="NotSibling">
 
         <LinearLayout
@@ -18,14 +17,13 @@
             android:orientation="vertical"
             android:layout_margin="24dp">
 
-            <!-- header -->
+            <!-- Header de puntos y botón cerrar sesión -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:paddingVertical="8dp">
 
-                <!-- Contenedor de puntos del jugador -->
                 <LinearLayout
                     android:id="@+id/pointsContainer"
                     android:layout_width="wrap_content"
@@ -52,7 +50,6 @@
                         android:textSize="14sp"/>
                 </LinearLayout>
 
-                <!-- Botón cerrar sesión -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnCerrarSesion"
                     android:layout_width="48dp"
@@ -91,8 +88,9 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <!-- Contenedor de la tabla de ranking -->
+            <!-- Contenedor principal de la tabla -->
             <LinearLayout
+                android:id="@+id/contenedorTablaRanking"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -148,33 +146,10 @@
                         android:layout_weight="1.5"
                         android:gravity="center" />
                 </LinearLayout>
-                <!-- Filas de ranking -->
 
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-                <include
-                    layout="@layout/ranking_item" />
-
+                <!-- Aquí se añadirán dinámicamente los items de ranking -->
             </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
-
 </RelativeLayout>

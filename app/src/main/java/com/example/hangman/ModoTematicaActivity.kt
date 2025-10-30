@@ -10,22 +10,22 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
-import androidx.core.content.ContextCompat
 import com.example.hangman.databinding.ActivityModoClasicoBinding
 import com.example.hangman.models.Words
 import com.google.android.material.button.MaterialButton
-import androidx.core.graphics.drawable.toDrawable
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import androidx.core.content.ContextCompat
+
 
 class ModoTematicaActivity : AppCompatActivity() {
 
-    //Declarar variables
     private lateinit var binding: ActivityModoClasicoBinding
     private var palabraActual = ""
     private val letrasAdivinadas = mutableSetOf<Char>()
@@ -34,6 +34,7 @@ class ModoTematicaActivity : AppCompatActivity() {
     private var pistaUsada = false
     private lateinit var tematica: String
     private var palabrasFiltradas = listOf<String>()
+    private var partidaStartMillis: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,7 +59,6 @@ class ModoTematicaActivity : AppCompatActivity() {
             return
         }
 
-        // Configuración inicial del juego
         binding.btnAyuda.setOnClickListener { mostrarPista() }
         binding.btnPausa.setOnClickListener { mostrarDialogoPausa() }
         binding.txtPuntos.text = "Puntos: $puntos"
@@ -66,7 +66,6 @@ class ModoTematicaActivity : AppCompatActivity() {
         startGame()
     }
 
-    // Inicia el juego
     private fun startGame() {
         palabraActual = palabrasFiltradas.random().uppercase()
         letrasAdivinadas.clear()
@@ -77,10 +76,9 @@ class ModoTematicaActivity : AppCompatActivity() {
         binding.txtPuntos.text = "Puntos: $puntos"
         actualizarPalabraMostrada()
         generarTeclado()
+        partidaStartMillis = System.currentTimeMillis()
     }
 
-
-    // Actualiza la palabra mostrada al usuario
     private fun actualizarPalabraMostrada() {
         val mostrada = palabraActual.map { c ->
             if (letrasAdivinadas.contains(c)) c else '_'
@@ -88,7 +86,6 @@ class ModoTematicaActivity : AppCompatActivity() {
         binding.txtPalabra.text = mostrada
     }
 
-    // Genera el teclado y sus interacciones
     private fun generarTeclado() {
         val tecladoContainer = binding.keyboardContainer
         tecladoContainer.removeAllViews()
@@ -141,7 +138,6 @@ class ModoTematicaActivity : AppCompatActivity() {
         }
     }
 
-    // Maneja la acción de presionar una letra
     private fun manejarLetra(letra: Char, boton: MaterialButton) {
         boton.isEnabled = false
         boton.alpha = 0.5f
@@ -159,15 +155,12 @@ class ModoTematicaActivity : AppCompatActivity() {
         }
     }
 
-    // Actualiza la imagen del ahorcado
     private fun updateHangman() {
         val fallos = 8 - intentosRestantes
         val resId = resources.getIdentifier("ahorcado_$fallos", "drawable", packageName)
         if (resId != 0) binding.imgAhorcado.setImageResource(resId)
     }
 
-    // Muestra la pista con confirmación
-    @SuppressLint("MissingInflatedId")
     private fun mostrarPista() {
         if (pistaUsada) {
             mostrarModalAdvertencia("Ya usaste la ayuda en esta ronda.")
@@ -179,26 +172,12 @@ class ModoTematicaActivity : AppCompatActivity() {
         }
 
         val confirmView = LayoutInflater.from(this).inflate(R.layout.dialog_confirm, null)
-
-        confirmView.setBackgroundColor(Color.TRANSPARENT)
-        fun clearBackgroundRec(v: View) {
-            v.background = null
-            if (v is ViewGroup) for (i in 0 until v.childCount) clearBackgroundRec(v.getChildAt(i))
-        }
+        confirmView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         val dialogConfirm = AlertDialog.Builder(this, R.style.CustomAlertDialogStyle)
             .setView(confirmView)
             .setCancelable(false)
             .create()
-
-        dialogConfirm.setOnShowListener {
-            dialogConfirm.window?.apply {
-                setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
-                decorView?.setPadding(0, 0, 0, 0)
-            }
-            dialogConfirm.findViewById<View>(android.R.id.content)?.background = null
-            confirmView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-        }
 
         confirmView.findViewById<Button>(R.id.btnCancelar).setOnClickListener {
             dialogConfirm.dismiss()
@@ -227,22 +206,12 @@ class ModoTematicaActivity : AppCompatActivity() {
                 .setCancelable(true)
                 .create()
 
-            dialogAyuda.setOnShowListener {
-                dialogAyuda.window?.apply {
-                    setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-                    decorView?.setPadding(0, 0, 0, 0)
-                }
-                dialogAyuda.findViewById<View>(android.R.id.content)?.background = null
-                ayudaView.setBackgroundColor(Color.TRANSPARENT)
-            }
-
             dialogAyuda.show()
         }
 
         dialogConfirm.show()
     }
 
-    // Desactiva todo el teclado
     private fun desactivarTeclado() {
         for (i in 0 until binding.keyboardContainer.childCount) {
             val fila = binding.keyboardContainer.getChildAt(i)
@@ -258,26 +227,27 @@ class ModoTematicaActivity : AppCompatActivity() {
         }
     }
 
-    // Verifica si el jugador ganó
     private fun verificarVictoria() {
         if (palabraActual.all { letrasAdivinadas.contains(it) }) {
             desactivarTeclado()
             puntos += 10
             binding.txtPuntos.text = "Puntos: $puntos"
+            val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
             mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntos = 10, gano = true)
+            guardarPartidaEnFirestore(palabraActual, true, 10, duracion)
         }
     }
 
-    // Verifica si el jugador perdió
     private fun verificarDerrota() {
         if (intentosRestantes <= 0) {
             desactivarTeclado()
             binding.txtPalabra.text = palabraActual.toCharArray().joinToString(" ")
+            val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
             mostrarDialogoResultado("Perdiste. La palabra era: $palabraActual", gano = false)
+            guardarPartidaEnFirestore(palabraActual, false, 0, duracion)
         }
     }
 
-    // Muestra un modal de resultado
     private fun mostrarDialogoResultado(mensaje: String, puntos: Int = 0, gano: Boolean = false) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_result, null)
         val dialog = AlertDialog.Builder(this)
@@ -320,19 +290,12 @@ class ModoTematicaActivity : AppCompatActivity() {
         desactivarTeclado()
     }
 
-    // Muestra el modal de pausa
-    @SuppressLint("MissingInflatedId")
     private fun mostrarDialogoPausa() {
-
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_pausa, null)
         val dialog = Dialog(this)
         dialog.setCancelable(false)
         dialog.setContentView(dialogView)
-
-        dialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.85).toInt(),
-            WindowManager.LayoutParams.WRAP_CONTENT
-        )
+        dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.85).toInt(), WindowManager.LayoutParams.WRAP_CONTENT)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.show()
 
@@ -348,7 +311,6 @@ class ModoTematicaActivity : AppCompatActivity() {
         }
     }
 
-    // Muestra advertencias simples
     private fun mostrarModalAdvertencia(mensaje: String) {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_warm, null)
         val txtMensaje = view.findViewById<TextView>(R.id.txtMensajeAdvertencia)
@@ -373,5 +335,71 @@ class ModoTematicaActivity : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+
+    // -------------------------- FIREBASE: GUARDADO --------------------------
+    private fun guardarPartidaEnFirestore(palabra: String, gano: Boolean, puntosGanados: Int, duracionSegundos: Long) {
+        val auth = FirebaseAuth.getInstance()
+        val db = FirebaseFirestore.getInstance()
+        val uid = auth.currentUser?.uid ?: return
+
+        val partida = mapOf(
+            "palabra" to palabra,
+            "resultado" to if (gano) "GANADA" else "PERDIDA",
+            "puntos" to puntosGanados,
+            "duracion" to duracionSegundos,
+            "modo" to "ModoTematica",
+            "fecha" to System.currentTimeMillis()
+        )
+
+        db.collection("usuarios").document(uid).collection("partidas")
+            .add(partida)
+            .addOnSuccessListener {
+                actualizarEstadisticasUsuario(uid, gano, puntosGanados, duracionSegundos)
+            }.addOnFailureListener { e ->
+                android.widget.Toast.makeText(this, "Error guardando partida: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun actualizarEstadisticasUsuario(uid: String, gano: Boolean, puntosGanados: Int, duracionSegundos: Long) {
+        val db = FirebaseFirestore.getInstance()
+        val userRef = db.collection("usuarios").document(uid)
+
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(userRef)
+            val puntosActuales = snapshot.getLong("puntosTotales") ?: 0
+            val ganadas = snapshot.getLong("partidasGanadas") ?: 0
+            val perdidas = snapshot.getLong("partidasPerdidas") ?: 0
+            val horasJugadas = snapshot.getDouble("horasJugadas") ?: 0.0
+
+            val nuevosPuntos = puntosActuales + puntosGanados
+            val nuevasGanadas = ganadas + if (gano) 1 else 0
+            val nuevasPerdidas = perdidas + if (!gano) 1 else 0
+            val nuevasHoras = horasJugadas + (duracionSegundos / 3600.0)
+
+            val nuevoNivel = calcularNivelDesdePuntos(nuevosPuntos)
+
+            transaction.update(userRef, mapOf(
+                "puntosTotales" to nuevosPuntos,
+                "partidasGanadas" to nuevasGanadas,
+                "partidasPerdidas" to nuevasPerdidas,
+                "horasJugadas" to nuevasHoras,
+                "nivel" to nuevoNivel
+            ))
+        }.addOnSuccessListener {
+            // ok
+        }.addOnFailureListener { e ->
+            // log
+        }
+    }
+
+    private fun calcularNivelDesdePuntos(puntos: Long): Long {
+        return when {
+            puntos < 1000L -> 1L
+            puntos < 3000L -> 2L
+            puntos < 6000L -> 3L
+            puntos < 10000L -> 4L
+            else -> 5L
+        }
     }
 }

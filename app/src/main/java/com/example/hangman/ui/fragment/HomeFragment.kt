@@ -12,14 +12,26 @@ import android.view.*
 import android.view.animation.Animation
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.hangman.ModoClasicoActivity
 import com.example.hangman.ModoContraRelojActivity
 import com.example.hangman.R
 import com.example.hangman.TematicaActivity
 import com.example.hangman.ui.LoginActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import android.widget.Toast
 
 class HomeFragment : Fragment() {
+
+    // Variables para estadísticas
+    private lateinit var txtGanadas: TextView
+    private lateinit var txtPerdidas: TextView
+    private lateinit var txtHoras: TextView
+
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
 
     // Inflamos el layout del fragmento
     override fun onCreateView(
@@ -27,6 +39,11 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
+
+        // Referencias de las estadísticas (asegurate de que existan en tu XML)
+        txtGanadas = view.findViewById(R.id.txtGanadas)
+        txtPerdidas = view.findViewById(R.id.txtPerdidas)
+        txtHoras = view.findViewById(R.id.txtHoras)
 
         // Botón para jugar en modo clásico
         val btnJugarClasico = view.findViewById<Button>(R.id.btnJugarClasico)
@@ -49,8 +66,29 @@ class HomeFragment : Fragment() {
             startActivity(intent)
         }
 
+        // Cargar estadísticas del usuario
+        cargarEstadisticas()
 
         return view
+    }
+
+    // 🔹 Carga las estadísticas desde Firestore
+    private fun cargarEstadisticas() {
+        val uid = auth.currentUser?.uid ?: return
+
+        db.collection("usuarios").document(uid).get()
+            .addOnSuccessListener { doc ->
+                val ganadas = doc.getLong("partidasGanadas") ?: 0
+                val perdidas = doc.getLong("partidasPerdidas") ?: 0
+                val horas = doc.getDouble("horasJugadas") ?: 0.0
+
+                txtGanadas.text = ganadas.toString()
+                txtPerdidas.text = perdidas.toString()
+                txtHoras.text = String.format("%.1f h", horas)
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Error al cargar estadísticas", Toast.LENGTH_SHORT).show()
+            }
     }
 
     // Muestra un modal personalizado para cerrar sesión
@@ -109,7 +147,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    // Cierra sesión y limpiar las preferencias
+    // Cierra sesión y limpia las preferencias
     private fun cerrarSesion() {
         val sharedPref = requireActivity().getSharedPreferences("user_prefs", 0)
         sharedPref.edit().clear().apply()
