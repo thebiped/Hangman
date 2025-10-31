@@ -18,19 +18,20 @@ object GameStatsManager {
 
         db.runTransaction { t ->
             val snapshot = t.get(userRef)
-            val puntos = snapshot.getLong("puntosTotales") ?: 0
-            val ganadas = snapshot.getLong("partidasGanadas") ?: 0
-            val perdidas = snapshot.getLong("partidasPerdidas") ?: 0
+
+            val puntos = snapshot.getLong("puntos") ?: 0L
+            val ganadas = snapshot.getLong("partidasGanadas") ?: 0L
+            val perdidas = snapshot.getLong("partidasPerdidas") ?: 0L
             val horas = snapshot.getDouble("horasJugadas") ?: 0.0
 
-            val nuevosPuntos = puntos + puntosGanados
+            val nuevosPuntos = puntos + puntosGanados.toLong()
             val nuevoNivel = calcularNivelDesdePuntos(nuevosPuntos)
 
             t.update(userRef, mapOf(
-                "puntosTotales" to nuevosPuntos,
-                "partidasGanadas" to ganadas + if (gano) 1 else 0,
-                "partidasPerdidas" to perdidas + if (!gano) 1 else 0,
-                "horasJugadas" to horas + (duracionSegundos / 3600.0),
+                "puntos" to nuevosPuntos,
+                "partidasGanadas" to (ganadas + if (gano) 1 else 0),
+                "partidasPerdidas" to (perdidas + if (!gano) 1 else 0),
+                "horasJugadas" to (horas + (duracionSegundos / 3600.0)),
                 "nivel" to nuevoNivel
             ))
         }

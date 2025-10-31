@@ -9,10 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.airbnb.lottie.LottieAnimationView
 import com.example.hangman.R
 import com.example.hangman.WelcomeActivity
+import com.example.hangman.models.UserData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginActivity : AppCompatActivity() {
+
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
 
@@ -31,7 +33,6 @@ class LoginActivity : AppCompatActivity() {
 
         val rootView = findViewById<ViewGroup>(android.R.id.content)
         var modalView: View? = null
-        var errorModalView: View? = null
 
         registroText.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
@@ -70,14 +71,15 @@ class LoginActivity : AppCompatActivity() {
                     db.collection("usuarios").document(uid).get()
                         .addOnSuccessListener { document ->
                             if (document.exists()) {
-                                val nombre = document.getString("nombreUsuario") ?: "Jugador"
+                                val user = document.toObject(UserData::class.java) ?: UserData()
 
-                                // Cambiar texto a "Inicio de sesión exitoso"
                                 messageText.text = "Inicio de sesión exitoso"
-                                animation.setAnimation(R.raw.progressbar_login) // ⚠️ Usa tu propia animación si querés
+                                animation.setAnimation(R.raw.progressbar_login) // reemplazá por tu animación
 
                                 modalView?.postDelayed({
-                                    startActivity(Intent(this, WelcomeActivity::class.java))
+                                    val intent = Intent(this, WelcomeActivity::class.java)
+                                    intent.putExtra("usuario", user) // ✅ ahora compila
+                                    startActivity(intent)
                                     finish()
                                 }, 2000)
                             } else {
@@ -102,7 +104,6 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    // Mostrar un modal temporal para errores
     private fun showErrorModal(rootView: ViewGroup, mensaje: String) {
         val errorModal = layoutInflater.inflate(R.layout.dialog_error_message, rootView, false)
         val textView = errorModal.findViewById<TextView>(R.id.errorText)

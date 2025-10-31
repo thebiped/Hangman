@@ -1,15 +1,12 @@
 package com.example.hangman.data
 
-import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
+import com.example.hangman.models.Partida
+import com.example.hangman.models.UserData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.UploadTask
-import com.google.android.gms.tasks.Task
-import com.example.hangman.models.Partida
-import com.example.hangman.models.UsuarioRanking
 
 object FirebaseService {
 
@@ -17,114 +14,94 @@ object FirebaseService {
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
 
-    // -------------------------------------------------------------------------------------------
-    // Guarda una nueva partida y actualiza las estadísticas del usuario
-    // -------------------------------------------------------------------------------------------
-    fun guardarPartida(resultado: String, palabra: String, puntosGanados: Int, duracionSegundos: Int = 0) {
-        val uid = auth.currentUser?.uid ?: return
-        val partida = Partida(
-            uid = uid,
-            resultado = resultado,
-            palabra = palabra,
-            puntosGanados = puntosGanados,
-            duracionSegundos = duracionSegundos,
-            fecha = System.currentTimeMillis()
-        )
-
-        val partidasRef = db.collection("partidas")
-        partidasRef.add(partida)
-            .addOnSuccessListener {
-                Log.d("FirebaseService", "✅ Partida guardada correctamente")
-                actualizarEstadisticas(uid, resultado, puntosGanados, duracionSegundos)
-            }
-            .addOnFailureListener { e ->
-                Log.e("FirebaseService", "❌ Error al guardar partida: ${e.message}")
-            }
+    // 🔹 Subir foto de perfil
+    fun uploadProfileImage(uid: String, uri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
+        val ref = storage.reference.child("profile_images/$uid.jpg")
+        ref.putFile(uri)
+            .continueWithTask { ref.downloadUrl }
+            .addOnSuccessListener { onSuccess(it.toString()) }
+            .addOnFailureListener { onFailure(it) }
     }
 
-    // -------------------------------------------------------------------------------------------
-    // Actualiza estadísticas acumuladas del usuario
-    // -------------------------------------------------------------------------------------------
-    private fun actualizarEstadisticas(uid: String, resultado: String, puntosGanados: Int, duracionSegundos: Int) {
+    // 🔹 Guardado atómico: usuario + partida
+    fun guardarPartidaAtomic(resultado: String, palabra: String, puntosGanados: Int, duracionSegundos: Int) {
+        val uid = auth.currentUser?.uid ?: return
         val userRef = db.collection("usuarios").document(uid)
+        val partidaRef = userRef.collection("partidas").document()
 
         db.runTransaction { transaction ->
             val snapshot = transaction.get(userRef)
-            val partidasGanadas = (snapshot.getLong("partidasGanadas") ?: 0) + if (resultado == "ganada") 1 else 0
-            val partidasPerdidas = (snapshot.getLong("partidasPerdidas") ?: 0) + if (resultado == "perdida") 1 else 0
-            val horasJugadas = (snapshot.getDouble("horasJugadas") ?: 0.0) + (duracionSegundos / 3600.0)
-            val puntuacionTotal = (snapshot.getLong("puntuacionTotal") ?: 0) + puntosGanados
 
+            val partidasGanadas = snapshot.getLong("partidasGanadas") ?: 0
+            val partidasPerdidas = snapshot.getLong("partidasPerdidas") ?: 0
+            val puntosActuales = snapshot.getLong("puntos") ?: 0
+            val horasJugadas = snapshot.getDouble("horasJugadas") ?: 0.0
+
+            val nuevasHoras = horasJugadas + (duracionSegundos / 3600.0)
+            val nuevosPuntos = if (resultado == "ganada") puntosActuales + puntosGanados else puntosActuales
+            val nuevasGanadas = if (resultado == "ganada") partidasGanadas + 1 else partidasGanadas
+            val nuevasPerdidas = if (resultado == "perdida") partidasPerdidas + 1 else partidasPerdidas
+            val nuevoNivel = calcularNivelDesdePuntos(nuevosPuntos)
+
+            // Actualizar usuario
             transaction.update(userRef, mapOf(
-                "partidasGanadas" to partidasGanadas,
-                "partidasPerdidas" to partidasPerdidas,
-                "horasJugadas" to horasJugadas,
-                "puntuacionTotal" to puntuacionTotal
+                "puntos" to nuevosPuntos,
+                "partidasGanadas" to nuevasGanadas,
+                "partidasPerdidas" to nuevasPerdidas,
+                "horasJugadas" to nuevasHoras,
+                "nivel" to nuevoNivel
+            ))
+
+            // Guardar partida
+            transaction.set(partidaRef, mapOf(
+                "resultado" to resultado,
+                "palabra" to palabra,
+                "puntos" to puntosGanados,
+                "duracionSegundos" to duracionSegundos,
+                "fecha" to System.currentTimeMillis()
             ))
         }.addOnSuccessListener {
-            Log.d("FirebaseService", "✅ Estadísticas actualizadas correctamente")
+            Log.d("FirebaseService", "✅ Partida guardada correctamente ($resultado)")
         }.addOnFailureListener { e ->
-            Log.e("FirebaseService", "❌ Error al actualizar estadísticas: ${e.message}")
+            Log.e("FirebaseService", "❌ Error al guardar partida: ${e.message}")
         }
     }
 
-    // -------------------------------------------------------------------------------------------
-    // Sube imagen de perfil y actualiza URL en Firestore
-    // -------------------------------------------------------------------------------------------
-    fun uploadProfileImage(uid: String, imageUri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
-        val ref = storage.reference.child("profile_images/$uid.jpg")
-        ref.putFile(imageUri)
-            .addOnSuccessListener {
-                ref.downloadUrl.addOnSuccessListener { uri ->
-                    val url = uri.toString()
-                    db.collection("usuarios").document(uid).update("imagenPerfil", url)
-                        .addOnSuccessListener {
-                            Log.d("FirebaseService", "✅ Imagen subida y URL actualizada")
-                            onSuccess(url)
-                        }
-                        .addOnFailureListener(onFailure)
-                }
-            }
-            .addOnFailureListener(onFailure)
+    private fun calcularNivelDesdePuntos(puntos: Long): Long {
+        return when {
+            puntos < 50 -> 1
+            puntos < 100 -> 2
+            puntos < 200 -> 3
+            puntos < 350 -> 4
+            else -> 5
+        }
     }
 
-    // -------------------------------------------------------------------------------------------
-    // Obtiene el ranking de los mejores jugadores
-    // -------------------------------------------------------------------------------------------
-    fun getRanking(limit: Long = 10, onComplete: (List<UsuarioRanking>) -> Unit, onError: (Exception) -> Unit) {
-        db.collection("usuarios")
-            .orderBy("puntuacionTotal", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .limit(limit)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val ranking = snapshot.documents.mapIndexed { index, doc ->
-                    UsuarioRanking(
-                        posicion = index + 1,
-                        nombre = doc.getString("nombreUsuario") ?: "Jugador",
-                        puntuacionTotal = doc.getLong("puntuacionTotal") ?: 0,
-                        partidasGanadas = doc.getLong("partidasGanadas") ?: 0,
-                        partidasPerdidas = doc.getLong("partidasPerdidas") ?: 0,
-                        horasJugadas = doc.getDouble("horasJugadas") ?: 0.0,
-                        fotoPerfil = doc.getString("imagenPerfil")
-                    )
-                }
-                onComplete(ranking)
-            }
-            .addOnFailureListener(onError)
-    }
-
-    // -------------------------------------------------------------------------------------------
-    // Obtiene el historial de partidas de un usuario
-    // -------------------------------------------------------------------------------------------
+    // 🔹 Obtener historial de partidas
     fun getHistorialPartidas(uid: String, onComplete: (List<Partida>) -> Unit, onError: (Exception) -> Unit) {
-        db.collection("partidas")
-            .whereEqualTo("uid", uid)
+        db.collection("usuarios").document(uid).collection("partidas")
             .orderBy("fecha", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(5)
             .get()
-            .addOnSuccessListener { snapshot ->
-                val partidas = snapshot.documents.mapNotNull { it.toObject(Partida::class.java) }
-                onComplete(partidas)
+            .addOnSuccessListener { snap ->
+                val lista = snap.documents.mapNotNull { it.toObject(Partida::class.java) }
+                onComplete(lista)
             }
-            .addOnFailureListener(onError)
+            .addOnFailureListener { onError(it) }
+    }
+
+    // 🔹 Ranking global
+    fun getRanking(onComplete: (List<UserData>) -> Unit, onError: (Exception) -> Unit) {
+        db.collection("usuarios")
+            .orderBy("puntos", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { result ->
+                val lista = result.documents.mapNotNull { it.toObject(UserData::class.java) }
+                onComplete(lista)
+            }
+            .addOnFailureListener {
+                Log.e("FirebaseService", "❌ Error al obtener ranking: ${it.message}")
+                onError(it)
+            }
     }
 }

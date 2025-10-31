@@ -20,14 +20,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import android.app.AlertDialog
 import android.content.Intent
-import android.view.animation.Animation
 import android.util.Log
 
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
@@ -49,33 +47,32 @@ class HomeFragment : Fragment() {
             startActivity(Intent(requireContext(), ModoContraRelojActivity::class.java))
         }
 
-        // Escuchar estadísticas en tiempo real
+        binding.btnCerrarSesion.setOnClickListener { mostrarDialogoCerrarSesion() }
+
+        // Obtener puntos y estadísticas en tiempo real
         val uid = auth.currentUser?.uid
-        if (uid != null) {
-            observarEstadisticasUsuario(uid)
-        } else {
-            mostrarDatosVacios()
-        }
+        if (uid != null) obtenerEstadisticasUsuario(uid) else mostrarDatosVacios()
 
         return view
     }
 
-    // Observa cambios en Firestore y actualiza los TextView
-    private fun observarEstadisticasUsuario(uid: String) {
+    private fun obtenerEstadisticasUsuario(uid: String) {
         db.collection("usuarios").document(uid)
             .addSnapshotListener { snapshot, e ->
-                if (e != null) return@addSnapshotListener
+                if (e != null) {
+                    Log.e("HomeFragment", "Error snapshot: ${e.message}")
+                    return@addSnapshotListener
+                }
                 if (snapshot != null && snapshot.exists()) {
                     val ganadas = snapshot.getLong("partidasGanadas") ?: 0
                     val perdidas = snapshot.getLong("partidasPerdidas") ?: 0
                     val horas = snapshot.getDouble("horasJugadas") ?: 0.0
-                    val puntos = snapshot.getLong("puntosTotales") ?: 0
-                    val nivel = snapshot.getLong("nivel") ?: 1
+                    val puntos = snapshot.getLong("puntos") ?: 0
 
-                    binding.txtPartidasGanadas.text = "$ganadas"
-                    binding.txtPartidasPerdidas.text = "$perdidas"
-                    binding.txtHorasJugadas.text = "${"%.2f".format(horas)}"
-                    binding.txtPuntosTotales.text = "$puntos"
+                    binding.txtPartidasGanadas.text = ganadas.toString()
+                    binding.txtPartidasPerdidas.text = perdidas.toString()
+                    binding.txtHorasJugadas.text = "${"%.2f".format(horas)}hs"
+                    binding.txtPuntos.text = "$puntos"
                 } else {
                     mostrarDatosVacios()
                 }
@@ -85,11 +82,10 @@ class HomeFragment : Fragment() {
     private fun mostrarDatosVacios() {
         binding.txtPartidasGanadas.text = "0"
         binding.txtPartidasPerdidas.text = "0"
-        binding.txtHorasJugadas.text = "0Hs"
-        binding.txtPuntosTotales.text = "0"
+        binding.txtHorasJugadas.text = "0hs"
+        binding.txtPuntos.text = "Puntos: 0"
     }
 
-    // Modal de cierre de sesión
     private fun mostrarDialogoCerrarSesion() {
         val view = layoutInflater.inflate(R.layout.dialog_logout, null)
         val dialog = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
@@ -105,11 +101,8 @@ class HomeFragment : Fragment() {
         }
 
         dialog.setOnDismissListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                rootView.setRenderEffect(null)
-            } else {
-                rootView.alpha = 1f
-            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) rootView.setRenderEffect(null)
+            else rootView.alpha = 1f
         }
 
         dialog.window?.apply {
@@ -122,18 +115,9 @@ class HomeFragment : Fragment() {
         dialog.show()
 
         view.findViewById<Button>(R.id.btnCerrarSesion).setOnClickListener {
-            val fadeOut = android.view.animation.AnimationUtils.loadAnimation(requireContext(), R.anim.fade_out)
-            view.startAnimation(fadeOut)
-            fadeOut.setAnimationListener(object : Animation.AnimationListener {
-                override fun onAnimationStart(animation: Animation?) {}
-                override fun onAnimationRepeat(animation: Animation?) {}
-                override fun onAnimationEnd(animation: Animation?) {
-                    dialog.dismiss()
-                    cerrarSesion()
-                }
-            })
+            dialog.dismiss()
+            cerrarSesion()
         }
-
         view.findViewById<ImageButton>(R.id.btnCerrarModal).setOnClickListener { dialog.dismiss() }
         view.findViewById<Button>(R.id.btnCancelar).setOnClickListener { dialog.dismiss() }
     }

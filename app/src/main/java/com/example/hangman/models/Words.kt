@@ -7,25 +7,22 @@ object Words {
         "cielo", "libro", "verde", "mesa", "silla", "nube", "piedra", "fuego", "lluvia", "viento",
         "correr", "camino", "puerta", "montaña", "bosque", "rio", "playa", "barco", "sombra", "estrella",
         "ventana", "escuela", "maestro", "jardin", "ciudad", "paisaje", "fruta", "cultura", "tiempo", "historia",
-        "naturaleza", "universo", "computadora", "teléfono", "bicicleta", "canción", "musica", "felicidad", "amistad", "familia",
-        "trabajo", "problema", "solución", "respuesta", "pregunta", "aventura", "memoria", "recuerdo", "verdad", "mentira",
-        "corazón", "emocion", "silencio", "ruido", "peligro", "misterio", "secreto", "fantasma", "dragón", "planeta"
+        "naturaleza", "universo", "computadora", "telefono", "bicicleta", "cancion", "musica", "felicidad", "amistad", "familia",
+        "trabajo", "problema", "solucion", "respuesta", "pregunta", "aventura", "memoria", "recuerdo", "verdad", "mentira",
+        "corazon", "emocion", "silencio", "ruido", "peligro", "misterio", "secreto", "fantasma", "dragon", "planeta"
     )
 
-    // Devuelve palabras filtradas según el nivel de dificultad
+    // Devuelve palabras filtradas según el nivel de dificultad (progresivo)
     fun getWordsByDifficulty(level: Int): List<String> {
-        return when (level) {
-            1 -> DICTIONARY.filter { it.length <= 4 }
-            2 -> DICTIONARY.filter { it.length in 5..6 }
-            3 -> DICTIONARY.filter { it.length >= 7 }
-            else -> DICTIONARY
-        }
+        val minLength = 3 + level
+        val maxLength = 5 + level * 2
+        return DICTIONARY.filter { it.length in minLength..maxLength }
     }
 
     // Devuelve palabras filtradas según la categoría seleccionada
     fun getWordsByCategory(category: String): List<String> {
         return when(category.lowercase()) {
-            "animales" -> listOf("perro", "gato", "elefante", "jirafa", "dragón")
+            "animales" -> listOf("perro", "gato", "elefante", "jirafa", "dragon")
             "deportes" -> listOf("futbol", "tenis", "natacion", "basket", "golf")
             "comidas" -> listOf("pizza", "hamburguesa", "ensalada", "pasta", "tarta")
             "naturaleza" -> listOf("rio", "montaña", "bosque", "estrella", "nube")
@@ -35,4 +32,3 @@ object Words {
         }
     }
 }
-
