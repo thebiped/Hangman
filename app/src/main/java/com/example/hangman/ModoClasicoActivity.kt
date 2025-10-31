@@ -19,6 +19,7 @@ import androidx.appcompat.widget.AppCompatButton
 import androidx.core.content.ContextCompat
 import com.example.hangman.databinding.ActivityModoClasicoBinding
 import com.example.hangman.models.Words
+import com.example.hangman.utils.GameStatsManager
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -233,8 +234,9 @@ class ModoClasicoActivity : AppCompatActivity() {
             puntos += puntosGanados
             binding.txtPuntos.text = "Puntos: $puntos"
             val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
+            GameStatsManager.actualizarEstadisticas(puntosGanados, gano = true, duracionSegundos = duracion)
             mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntos = puntosGanados, gano = true)
-            guardarPartidaEnFirestore(palabraActual, true, puntosGanados, duracion)
+
         }
     }
 
@@ -243,8 +245,8 @@ class ModoClasicoActivity : AppCompatActivity() {
             desactivarTeclado()
             binding.txtPalabra.text = palabraActual.toCharArray().joinToString(" ")
             val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
+            GameStatsManager.actualizarEstadisticas(0, gano = false, duracionSegundos = duracion)
             mostrarDialogoResultado("Perdiste. La palabra era: $palabraActual", gano = false)
-            guardarPartidaEnFirestore(palabraActual, false, 0, duracion)
         }
     }
 
@@ -304,7 +306,6 @@ class ModoClasicoActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    // ---------------- FIREBASE ----------------
     private fun obtenerNivelUsuario(callback: (Int) -> Unit) {
         val uid = auth.currentUser?.uid ?: return callback(1)
         db.collection("usuarios").document(uid).get()
@@ -315,51 +316,17 @@ class ModoClasicoActivity : AppCompatActivity() {
             .addOnFailureListener { callback(1) }
     }
 
-    private fun guardarPartidaEnFirestore(palabra: String, gano: Boolean, puntosGanados: Int, duracionSegundos: Long) {
-        val uid = auth.currentUser?.uid ?: return
-        val partida = mapOf(
-            "palabra" to palabra,
-            "resultado" to if (gano) "GANADA" else "PERDIDA",
-            "puntos" to puntosGanados,
-            "duracion" to duracionSegundos,
-            "modo" to "ModoClasico",
-            "fecha" to System.currentTimeMillis()
-        )
-        db.collection("usuarios").document(uid).collection("partidas")
-            .add(partida)
-            .addOnSuccessListener {
-                actualizarEstadisticasUsuario(uid, gano, puntosGanados, duracionSegundos)
-            }
-    }
 
-    private fun actualizarEstadisticasUsuario(uid: String, gano: Boolean, puntosGanados: Int, duracionSegundos: Long) {
-        val userRef = db.collection("usuarios").document(uid)
-        db.runTransaction { t ->
-            val s = t.get(userRef)
-            val puntos = s.getLong("puntosTotales") ?: 0
-            val ganadas = s.getLong("partidasGanadas") ?: 0
-            val perdidas = s.getLong("partidasPerdidas") ?: 0
-            val horas = s.getDouble("horasJugadas") ?: 0.0
-            val nuevos = puntos + puntosGanados
-            val nivel = calcularNivelDesdePuntos(nuevos)
-            t.update(userRef, mapOf(
-                "puntosTotales" to nuevos,
-                "partidasGanadas" to ganadas + if (gano) 1 else 0,
-                "partidasPerdidas" to perdidas + if (!gano) 1 else 0,
-                "horasJugadas" to horas + (duracionSegundos / 3600.0),
-                "nivel" to nivel
-            ))
-        }
-    }
-
-    private fun calcularNivelDesdePuntos(p: Long): Long =
-        when {
-            p < 1000 -> 1
-            p < 3000 -> 2
-            p < 6000 -> 3
-            p < 10000 -> 4
+    private fun calcularNivelDesdePartidas(ganadas: Long): Long {
+        return when {
+            ganadas < 10 -> 1 // Nivel inicial
+            ganadas < 20 -> 2 // Nivel 2
+            ganadas < 35 -> 3
+            ganadas < 50 -> 4
             else -> 5
         }
+    }
+
     @SuppressLint("MissingInflatedId")
     private fun mostrarDialogoPausa() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_pausa, null)

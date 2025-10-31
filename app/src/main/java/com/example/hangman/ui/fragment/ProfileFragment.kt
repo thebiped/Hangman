@@ -64,9 +64,9 @@ class ProfileFragment : Fragment() {
         txtNombre = view.findViewById(R.id.txtNombre)
         txtNivel = view.findViewById(R.id.txtNivel)
         txtPuntos = view.findViewById(R.id.txtPuntos)
-        txtGanadas = view.findViewById(R.id.txtGanadas)
-        txtPerdidas = view.findViewById(R.id.txtPerdidas)
-        txtHoras = view.findViewById(R.id.txtHoras)
+        txtGanadas = view.findViewById(R.id.txtPartidasGanadas)
+        txtPerdidas = view.findViewById(R.id.txtPartidasPerdidas)
+        txtHoras = view.findViewById(R.id.txtHorasJugadas)
         imgPerfil = view.findViewById(R.id.imgPerfil)
 
         view.findViewById<AppCompatButton>(R.id.btnCerrarSesion).setOnClickListener {

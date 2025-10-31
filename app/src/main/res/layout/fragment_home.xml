@@ -46,7 +46,7 @@
                         app:tint="@color/textWhite"/>
 
                     <TextView
-                        android:id="@+id/txtPoints"
+                        android:id="@+id/txtPuntosTotales"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="10"
@@ -110,7 +110,6 @@
                         android:padding="8dp">
 
                         <TextView
-
                             android:text="Partidas Ganadas"
                             android:textSize="10sp"
                             android:textColor="@color/textWhite"
@@ -118,8 +117,7 @@
                             android:layout_height="wrap_content" />
 
                         <TextView
-                            android:id="@+id/txtGanadas"
-                            android:text="10"
+                            android:id="@+id/txtPartidasGanadas"                            android:text="10"
                             android:textSize="20sp"
                             android:textStyle="bold"
                             android:textColor="@color/textWhite"
@@ -128,7 +126,7 @@
 
 
                     </LinearLayout>
-                    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_weight="1"
                         android:layout_height="wrap_content"
@@ -147,13 +145,13 @@
                             android:layout_height="wrap_content" />
 
                         <TextView
-                            android:id="@+id/txtPerdidas"
+                            android:id="@+id/txtPartidasPerdidas"
+                            android:layout_width="18dp"
+                            android:layout_height="wrap_content"
                             android:text="10"
-                            android:textSize="20sp"
-                            android:textStyle="bold"
                             android:textColor="@color/textWhite"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
 
 
                     </LinearLayout>
@@ -177,7 +175,7 @@
 
                         <TextView
                             android:text="10"
-                            android:id="@+id/txtHoras"
+                            android:id="@+id/txtHorasJugadas"
                             android:textSize="20sp"
                             android:textStyle="bold"
                             android:textColor="@color/textWhite"

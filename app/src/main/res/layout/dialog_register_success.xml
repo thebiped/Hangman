@@ -10,27 +10,24 @@
     android:visibility="gone"
     android:padding="24dp">
 
-    <TextView
-        android:id="@+id/successText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Registrado correctamente"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp"
-        android:gravity="center" />
-
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/loadingLottie"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:layout_gravity="center"
         app:lottie_rawRes="@raw/progressbar_login"
         app:lottie_autoPlay="true"
         app:lottie_loop="true"
         app:lottie_speed="1.2"
         app:lottie_renderMode="software" />
 
+    <TextView
+        android:id="@+id/loadingMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Creando cuenta..."
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:layout_marginTop="16dp"
+        android:gravity="center" />
 
 </LinearLayout>

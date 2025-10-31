@@ -14,6 +14,7 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import com.example.hangman.databinding.ActivityModoClasicoBinding
@@ -22,6 +23,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.core.content.ContextCompat
+import com.example.hangman.utils.GameStatsManager
 
 
 class ModoTematicaActivity : AppCompatActivity() {
@@ -233,8 +235,8 @@ class ModoTematicaActivity : AppCompatActivity() {
             puntos += 10
             binding.txtPuntos.text = "Puntos: $puntos"
             val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
-            mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntos = 10, gano = true)
-            guardarPartidaEnFirestore(palabraActual, true, 10, duracion)
+            GameStatsManager.actualizarEstadisticas(puntos, gano = true, duracionSegundos = duracion)
+            mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntos = puntos, gano = true)
         }
     }
 
@@ -243,8 +245,8 @@ class ModoTematicaActivity : AppCompatActivity() {
             desactivarTeclado()
             binding.txtPalabra.text = palabraActual.toCharArray().joinToString(" ")
             val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
+            GameStatsManager.actualizarEstadisticas(0, gano = false, duracionSegundos = duracion)
             mostrarDialogoResultado("Perdiste. La palabra era: $palabraActual", gano = false)
-            guardarPartidaEnFirestore(palabraActual, false, 0, duracion)
         }
     }
 
@@ -335,62 +337,6 @@ class ModoTematicaActivity : AppCompatActivity() {
         }
 
         dialog.show()
-    }
-
-    // -------------------------- FIREBASE: GUARDADO --------------------------
-    private fun guardarPartidaEnFirestore(palabra: String, gano: Boolean, puntosGanados: Int, duracionSegundos: Long) {
-        val auth = FirebaseAuth.getInstance()
-        val db = FirebaseFirestore.getInstance()
-        val uid = auth.currentUser?.uid ?: return
-
-        val partida = mapOf(
-            "palabra" to palabra,
-            "resultado" to if (gano) "GANADA" else "PERDIDA",
-            "puntos" to puntosGanados,
-            "duracion" to duracionSegundos,
-            "modo" to "ModoTematica",
-            "fecha" to System.currentTimeMillis()
-        )
-
-        db.collection("usuarios").document(uid).collection("partidas")
-            .add(partida)
-            .addOnSuccessListener {
-                actualizarEstadisticasUsuario(uid, gano, puntosGanados, duracionSegundos)
-            }.addOnFailureListener { e ->
-                android.widget.Toast.makeText(this, "Error guardando partida: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun actualizarEstadisticasUsuario(uid: String, gano: Boolean, puntosGanados: Int, duracionSegundos: Long) {
-        val db = FirebaseFirestore.getInstance()
-        val userRef = db.collection("usuarios").document(uid)
-
-        db.runTransaction { transaction ->
-            val snapshot = transaction.get(userRef)
-            val puntosActuales = snapshot.getLong("puntosTotales") ?: 0
-            val ganadas = snapshot.getLong("partidasGanadas") ?: 0
-            val perdidas = snapshot.getLong("partidasPerdidas") ?: 0
-            val horasJugadas = snapshot.getDouble("horasJugadas") ?: 0.0
-
-            val nuevosPuntos = puntosActuales + puntosGanados
-            val nuevasGanadas = ganadas + if (gano) 1 else 0
-            val nuevasPerdidas = perdidas + if (!gano) 1 else 0
-            val nuevasHoras = horasJugadas + (duracionSegundos / 3600.0)
-
-            val nuevoNivel = calcularNivelDesdePuntos(nuevosPuntos)
-
-            transaction.update(userRef, mapOf(
-                "puntosTotales" to nuevosPuntos,
-                "partidasGanadas" to nuevasGanadas,
-                "partidasPerdidas" to nuevasPerdidas,
-                "horasJugadas" to nuevasHoras,
-                "nivel" to nuevoNivel
-            ))
-        }.addOnSuccessListener {
-            // ok
-        }.addOnFailureListener { e ->
-            // log
-        }
     }
 
     private fun calcularNivelDesdePuntos(puntos: Long): Long {

@@ -7,19 +7,24 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import com.example.hangman.databinding.ActivityModoContraRelojBinding
 import com.example.hangman.models.Words
+import com.example.hangman.utils.GameStatsManager
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.math.max
 
@@ -38,28 +43,29 @@ class ModoContraRelojActivity : AppCompatActivity() {
     private var velocidadFactor = 1.0f
     private val velocidadMax = 5f
     private var estaPausado = false
-    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val handler = Handler(Looper.getMainLooper())
+    private var partidaStartMillis: Long = 0L
+
     private val tickRunnable = object : Runnable {
         override fun run() {
-            if (!estaPausado) {
-                val decremento = (intervaloBase * velocidadFactor).toLong()
-                tiempoRestanteMillis -= decremento
-
-                if (tiempoRestanteMillis < 0L) tiempoRestanteMillis = 0L
-
-                updateHangman()
-                binding.txtTimer.text = "${(tiempoRestanteMillis / 1000)}s"
-
-                if (tiempoRestanteMillis <= 0L) {
-                    onTimeUp()
-                    return
+            try {
+                if (!estaPausado) {
+                    val decremento = (intervaloBase * velocidadFactor).toLong()
+                    tiempoRestanteMillis -= decremento
+                    if (tiempoRestanteMillis < 0L) tiempoRestanteMillis = 0L
+                    updateHangman()
+                    binding.txtTimer.text = "${(tiempoRestanteMillis / 1000)}s"
+                    if (tiempoRestanteMillis <= 0L) {
+                        onTimeUp()
+                        return
+                    }
                 }
+                handler.postDelayed(this, intervaloBase)
+            } catch (t: Throwable) {
+                Log.e("ModoContraReloj", "tickRunnable error", t)
             }
-            handler.postDelayed(this, intervaloBase)
         }
     }
-
-    private var partidaStartMillis: Long = 0L
 
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,14 +108,15 @@ class ModoContraRelojActivity : AppCompatActivity() {
         pistaUsada = false
         velocidadFactor = 1.0f
         estaPausado = false
-
         tiempoRestanteMillis = totalMillis
         binding.txtTimer.text = "${totalMillis / 1000}s"
         binding.imgAhorcado.setImageResource(R.drawable.ahorcado_1)
         actualizarPalabraMostrada()
         generarTeclado()
-        startTimer()
+        // importante: inicializamos la marca de inicio de la partida
         partidaStartMillis = System.currentTimeMillis()
+        startTimer()
+        Log.d("ModoContraReloj", "Nueva partida: palabra='$palabraActual' tiempo=${totalMillis/1000}s")
     }
 
     private fun startTimer() {
@@ -126,7 +133,12 @@ class ModoContraRelojActivity : AppCompatActivity() {
         val tiempoTranscurrido = totalMillis - tiempoRestanteMillis
         val etapaActual = ((tiempoTranscurrido.toFloat() / totalMillis) * etapas).toInt().coerceIn(1, etapas)
         val resId = resources.getIdentifier("ahorcado_$etapaActual", "drawable", packageName)
-        binding.imgAhorcado.setImageResource(resId)
+        if (resId != 0) {
+            binding.imgAhorcado.setImageResource(resId)
+        } else {
+            // si no encontró el recurso, logueamos (evita NullPointerByResource)
+            Log.w("ModoContraReloj", "Drawable ahorcado_$etapaActual no encontrado.")
+        }
     }
 
     private fun actualizarPalabraMostrada() {
@@ -137,7 +149,6 @@ class ModoContraRelojActivity : AppCompatActivity() {
     private fun generarTeclado() {
         val tecladoContainer = binding.keyboardContainer
         tecladoContainer.removeAllViews()
-
         val letras = ('A'..'Z').toMutableList()
         letras.add('Ñ')
         val letrasPorFila = 9
@@ -152,7 +163,6 @@ class ModoContraRelojActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
             }
-
             val inicio = fila * letrasPorFila
             val fin = minOf(inicio + letrasPorFila, letras.size)
             val subLista = letras.subList(inicio, fin)
@@ -214,24 +224,16 @@ class ModoContraRelojActivity : AppCompatActivity() {
             puntos += puntosGanados
             binding.txtPuntos.text = "Puntos: $puntos"
             val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
-            mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntos = puntosGanados, gano = true)
+            // guardado local + firestore
+            mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntosGanados = puntosGanados, gano = true)
             guardarPartidaEnFirestore(palabraActual, true, puntosGanados, duracion)
         }
     }
 
     private fun mostrarPista() {
         stopTimer()
-
-        if (pistaUsada) {
-            mostrarModalAdvertencia("Ya usaste la ayuda en esta ronda.")
-            startTimer()
-            return
-        }
-        if (puntos < 10) {
-            mostrarModalAdvertencia("Necesitás al menos 10 puntos para usar la ayuda.")
-            startTimer()
-            return
-        }
+        if (pistaUsada) { mostrarModalAdvertencia("Ya usaste la ayuda en esta ronda."); return }
+        if (puntos < 10) { mostrarModalAdvertencia("Necesitás al menos 10 puntos para usar la ayuda."); return }
 
         puntos -= 10
         pistaUsada = true
@@ -248,15 +250,11 @@ class ModoContraRelojActivity : AppCompatActivity() {
             .setView(ayudaView)
             .setCancelable(true)
             .create()
-
-        dialog.setOnDismissListener {
-            startTimer()
-        }
-
+        dialog.setOnDismissListener { startTimer() }
         dialog.show()
     }
 
-    private fun mostrarDialogoResultado(mensaje: String, puntos: Int = 0, gano: Boolean = false) {
+    private fun mostrarDialogoResultado(mensaje: String, puntosGanados: Int = 0, gano: Boolean = false) {
         stopTimer()
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_result, null)
         val dialog = AlertDialog.Builder(this)
@@ -272,8 +270,11 @@ class ModoContraRelojActivity : AppCompatActivity() {
         txtResultado.text = mensaje
         if (gano) {
             txtPuntos.visibility = View.VISIBLE
-            txtPuntos.text = "¡Ganaste $puntos puntos!"
-        } else txtPuntos.visibility = View.GONE
+            txtPuntos.text = "¡Ganaste $puntosGanados puntos! 👑"
+        } else {
+            txtPuntos.visibility = View.VISIBLE
+            txtPuntos.text = "Palabra: $palabraActual ☠️"
+        }
 
         btnSeguir.setOnClickListener {
             dialog.dismiss()
@@ -286,7 +287,7 @@ class ModoContraRelojActivity : AppCompatActivity() {
         }
 
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             setLayout((resources.displayMetrics.widthPixels * 0.85).toInt(), WindowManager.LayoutParams.WRAP_CONTENT)
             setGravity(Gravity.CENTER)
             setDimAmount(0f)
@@ -304,7 +305,7 @@ class ModoContraRelojActivity : AppCompatActivity() {
         dialog.setCancelable(false)
         dialog.setContentView(dialogView)
         dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.85).toInt(), WindowManager.LayoutParams.WRAP_CONTENT)
-        dialog.window?.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.show()
 
         dialogView.findViewById<AppCompatButton>(R.id.btnContinuar).setOnClickListener {
@@ -334,7 +335,7 @@ class ModoContraRelojActivity : AppCompatActivity() {
             .create()
 
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             setLayout((resources.displayMetrics.widthPixels * 0.85).toInt(), WindowManager.LayoutParams.WRAP_CONTENT)
             setGravity(Gravity.CENTER)
             setDimAmount(0.6f)
@@ -353,36 +354,47 @@ class ModoContraRelojActivity : AppCompatActivity() {
         stopTimer()
         desactivarTeclado()
         val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
-        mostrarDialogoResultado("¡Se acabó el tiempo!", puntos, gano = false)
+        mostrarDialogoResultado("¡Se acabó el tiempo!", puntosGanados = 0, gano = false)
         guardarPartidaEnFirestore(palabraActual, false, 0, duracion)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         stopTimer()
+        handler.removeCallbacksAndMessages(null)
     }
 
-    // -------------------------- FIREBASE: GUARDADO igual que en ModoClasico --------------------------
-    private fun guardarPartidaEnFirestore(palabra: String, gano: Boolean, puntosGanados: Int, duracionSegundos: Long) {
+    private fun guardarPartidaEnFirestore(
+        palabra: String,
+        gano: Boolean,
+        puntosGanados: Int,
+        duracionSegundos: Long
+    ) {
         val auth = FirebaseAuth.getInstance()
         val db = FirebaseFirestore.getInstance()
-        val uid = auth.currentUser?.uid ?: return
+        val uid = auth.currentUser?.uid ?: run {
+            Toast.makeText(this, "Usuario no autenticado", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        val partida = mapOf(
+        val partida = hashMapOf(
             "palabra" to palabra,
             "resultado" to if (gano) "GANADA" else "PERDIDA",
             "puntos" to puntosGanados,
             "duracion" to duracionSegundos,
             "modo" to "ModoContraReloj",
-            "fecha" to System.currentTimeMillis()
+            "fecha" to FieldValue.serverTimestamp()
         )
 
         db.collection("usuarios").document(uid).collection("partidas")
             .add(partida)
             .addOnSuccessListener {
+                // Actualizamos estadísticas (transacción)
                 actualizarEstadisticasUsuario(uid, gano, puntosGanados, duracionSegundos)
-            }.addOnFailureListener { e ->
-                android.widget.Toast.makeText(this, "Error guardando partida: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error guardando partida: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.w("ModoContraReloj", "guardarPartidaEnFirestore failed", e)
             }
     }
 
@@ -392,29 +404,31 @@ class ModoContraRelojActivity : AppCompatActivity() {
 
         db.runTransaction { transaction ->
             val snapshot = transaction.get(userRef)
-            val puntosActuales = snapshot.getLong("puntosTotales") ?: 0
-            val ganadas = snapshot.getLong("partidasGanadas") ?: 0
-            val perdidas = snapshot.getLong("partidasPerdidas") ?: 0
+            val puntosActuales = snapshot.getLong("puntosTotales") ?: 0L
+            val ganadas = snapshot.getLong("partidasGanadas") ?: 0L
+            val perdidas = snapshot.getLong("partidasPerdidas") ?: 0L
             val horasJugadas = snapshot.getDouble("horasJugadas") ?: 0.0
 
-            val nuevosPuntos = puntosActuales + puntosGanados
-            val nuevasGanadas = ganadas + if (gano) 1 else 0
-            val nuevasPerdidas = perdidas + if (!gano) 1 else 0
-            val nuevasHoras = horasJugadas + (duracionSegundos / 3600.0)
+            val nuevosPuntos = puntosActuales + puntosGanados.toLong()
+            val nuevasGanadas = ganadas + if (gano) 1L else 0L
+            val nuevasPerdidas = perdidas + if (!gano) 1L else 0L
+            val nuevasHoras = horasJugadas + (duracionSegundos.toDouble() / 3600.0)
 
             val nuevoNivel = calcularNivelDesdePuntos(nuevosPuntos)
-
-            transaction.update(userRef, mapOf(
+            val updates: MutableMap<String, Any> = mutableMapOf(
                 "puntosTotales" to nuevosPuntos,
                 "partidasGanadas" to nuevasGanadas,
                 "partidasPerdidas" to nuevasPerdidas,
                 "horasJugadas" to nuevasHoras,
                 "nivel" to nuevoNivel
-            ))
+            )
+
+            transaction.update(userRef, updates)
+            null
         }.addOnSuccessListener {
-            // ok
+            Log.d("ModoContraReloj", "Estadísticas actualizadas correctamente.")
         }.addOnFailureListener { e ->
-            // log
+            Log.w("ModoContraReloj", "Error actualizando estadísticas: ${e.message}", e)
         }
     }
 

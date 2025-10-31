@@ -19,12 +19,11 @@ class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
 
-        // Inicializar Firebase
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        // Referencias a los campos de entrada y botones
         val nombreInput = findViewById<EditText>(R.id.usernameEditText)
         val emailInput = findViewById<EditText>(R.id.emailEditText)
         val passInput = findViewById<EditText>(R.id.passwordEditText)
@@ -35,7 +34,6 @@ class RegisterActivity : AppCompatActivity() {
         val rootView = findViewById<ViewGroup>(android.R.id.content)
         var modalView: View? = null
 
-        // Manejo del registro
         registerButton.setOnClickListener {
             val nombre = nombreInput.text.toString().trim()
             val email = emailInput.text.toString().trim()
@@ -43,10 +41,10 @@ class RegisterActivity : AppCompatActivity() {
             val confirmPass = confirmPassInput.text.toString().trim()
 
             if (nombre.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
-                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                showErrorModal(rootView, "Completa todos los campos")
                 return@setOnClickListener
             } else if (pass != confirmPass) {
-                Toast.makeText(this, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                showErrorModal(rootView, "Las contraseñas no coinciden")
                 return@setOnClickListener
             }
 
@@ -55,17 +53,21 @@ class RegisterActivity : AppCompatActivity() {
                 modalView = layoutInflater.inflate(R.layout.dialog_register_success, rootView, false)
                 rootView.addView(modalView)
             }
-            modalView?.visibility = View.VISIBLE
-            modalView?.alpha = 0f
-            modalView?.animate()?.alpha(1f)?.setDuration(500)?.start()
-            modalView?.findViewById<LottieAnimationView>(R.id.loadingLottie)?.playAnimation()
 
-            // Registro con Firebase Authentication
+            val animation = modalView!!.findViewById<LottieAnimationView>(R.id.loadingLottie)
+            val messageText = modalView!!.findViewById<TextView>(R.id.loadingMessage)
+
+            modalView!!.visibility = View.VISIBLE
+            modalView!!.alpha = 0f
+            modalView!!.animate()?.alpha(1f)?.setDuration(400)?.start()
+            messageText.text = "Creando cuenta..."
+            animation.playAnimation()
+
+            // Registro con Firebase
             auth.createUserWithEmailAndPassword(email, pass)
                 .addOnSuccessListener { authResult ->
                     val uid = authResult.user?.uid ?: return@addOnSuccessListener
 
-                    // Datos del usuario para guardar en Firestore
                     val usuario = hashMapOf(
                         "uid" to uid,
                         "nombreUsuario" to nombre,
@@ -78,33 +80,54 @@ class RegisterActivity : AppCompatActivity() {
                         "fechaRegistro" to System.currentTimeMillis()
                     )
 
-                    // Guardar datos adicionales en Firestore
                     db.collection("usuarios")
                         .document(uid)
                         .set(usuario)
                         .addOnSuccessListener {
-                            Toast.makeText(this, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                            messageText.text = "Registro exitoso"
+                            animation.setAnimation(R.raw.progressbar_login) // ⚠️ reemplazá por tu animación de éxito
 
-                            // Redirigir a LoginActivity después de 2 segundos
                             modalView?.postDelayed({
                                 startActivity(Intent(this, LoginActivity::class.java))
                                 finish()
                             }, 2000)
                         }
                         .addOnFailureListener { e ->
-                            Toast.makeText(this, "Error al guardar usuario: ${e.message}", Toast.LENGTH_SHORT).show()
                             modalView?.visibility = View.GONE
+                            showErrorModal(rootView, "Error al guardar usuario")
                         }
                 }
                 .addOnFailureListener { e ->
-                    Toast.makeText(this, "Error de registro: ${e.message}", Toast.LENGTH_SHORT).show()
                     modalView?.visibility = View.GONE
+                    val mensaje = when {
+                        e.message?.contains("email") == true -> "El correo no es válido o ya está registrado"
+                        e.message?.contains("password") == true -> "La contraseña es demasiado débil"
+                        else -> "Error de registro"
+                    }
+                    showErrorModal(rootView, mensaje)
                 }
         }
 
-        // Navegar a pantalla de login si el usuario quiere
         goLogin.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
         }
+    }
+
+    // Modal de error reutilizable
+    private fun showErrorModal(rootView: ViewGroup, mensaje: String) {
+        val errorModal = layoutInflater.inflate(R.layout.dialog_error_message, rootView, false)
+        val textView = errorModal.findViewById<TextView>(R.id.errorText)
+        textView.text = mensaje
+
+        rootView.addView(errorModal)
+        errorModal.alpha = 0f
+        errorModal.animate().alpha(1f).setDuration(300).start()
+
+        errorModal.postDelayed({
+            errorModal.animate().alpha(0f).setDuration(500).withEndAction {
+                rootView.removeView(errorModal)
+            }.start()
+        }, 2500)
     }
 }
