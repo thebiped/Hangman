@@ -17,9 +17,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.content.ContextCompat
+import com.example.hangman.data.FirebaseService
 import com.example.hangman.databinding.ActivityModoClasicoBinding
 import com.example.hangman.models.Words
-import com.example.hangman.utils.GameStatsManager
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -33,7 +33,6 @@ class ModoClasicoActivity : AppCompatActivity() {
     private var nivelActual = 1
     private var puntos = 0
     private var pistaUsada = false
-
     private var partidaStartMillis: Long = 0L
 
     private val auth = FirebaseAuth.getInstance()
@@ -46,10 +45,8 @@ class ModoClasicoActivity : AppCompatActivity() {
 
         binding.btnAyuda.setOnClickListener { mostrarPista() }
         binding.btnPausa.setOnClickListener { mostrarDialogoPausa() }
-
         binding.txtPuntos.text = "Puntos: $puntos"
 
-        // Obtener nivel desde Firestore antes de iniciar el juego
         obtenerNivelUsuario { nivel ->
             nivelActual = nivel
             startGame()
@@ -80,23 +77,16 @@ class ModoClasicoActivity : AppCompatActivity() {
     }
 
     private fun actualizarPalabraMostrada() {
-        val mostrada = palabraActual.map { c ->
-            if (letrasAdivinadas.contains(c)) c else '_'
-        }.joinToString(" ")
+        val mostrada = palabraActual.map { if (letrasAdivinadas.contains(it)) it else '_' }.joinToString(" ")
         binding.txtPalabra.text = mostrada
     }
 
     private fun generarTeclado() {
         val tecladoContainer = binding.keyboardContainer
         tecladoContainer.removeAllViews()
+        val letras = ('A'..'Z').toMutableList().apply { add('Ñ') }
 
-        val letras = ('A'..'Z').toMutableList()
-        letras.add('Ñ')
-
-        val letrasPorFila = 9
-        val totalFilas = (letras.size + letrasPorFila - 1) / letrasPorFila
-
-        for (fila in 0 until totalFilas) {
+        letras.chunked(9).forEach { fila ->
             val filaLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER
@@ -105,12 +95,7 @@ class ModoClasicoActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
             }
-
-            val inicio = fila * letrasPorFila
-            val fin = minOf(inicio + letrasPorFila, letras.size)
-            val subLista = letras.subList(inicio, fin)
-
-            for (letra in subLista) {
+            fila.forEach { letra ->
                 val boton = MaterialButton(this).apply {
                     text = letra.toString()
                     setTextColor(Color.WHITE)
@@ -118,14 +103,9 @@ class ModoClasicoActivity : AppCompatActivity() {
                     strokeWidth = 4
                     cornerRadius = 100
                     backgroundTintList = ColorStateList.valueOf(Color.parseColor("#9400D3"))
-                    layoutParams = LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1f
-                    ).apply {
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                         setMargins(4, 4, 4, 4)
                     }
-                    setPadding(0, 0, 0, 0)
                     setOnClickListener {
                         manejarLetra(letra, this)
                         isEnabled = false
@@ -159,6 +139,91 @@ class ModoClasicoActivity : AppCompatActivity() {
         val fallos = 8 - intentosRestantes
         val resId = resources.getIdentifier("ahorcado_$fallos", "drawable", packageName)
         if (resId != 0) binding.imgAhorcado.setImageResource(resId)
+    }
+
+    private fun verificarVictoria() {
+        if (palabraActual.all { letrasAdivinadas.contains(it) }) {
+            desactivarTeclado()
+            val puntosGanados = 10 + (nivelActual - 1) * 2
+            puntos += puntosGanados
+            binding.txtPuntos.text = "Puntos: $puntos"
+            val duracion = ((System.currentTimeMillis() - partidaStartMillis) / 1000).toInt()
+
+            FirebaseService.guardarPartida("ganada", palabraActual, puntosGanados, duracion)
+            mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntos = puntosGanados, gano = true)
+        }
+    }
+
+    private fun verificarDerrota() {
+        if (intentosRestantes <= 0) {
+            desactivarTeclado()
+            binding.txtPalabra.text = palabraActual.toCharArray().joinToString(" ")
+            val duracion = ((System.currentTimeMillis() - partidaStartMillis) / 1000).toInt()
+
+            FirebaseService.guardarPartida("perdida", palabraActual, 0, duracion)
+            mostrarDialogoResultado("Perdiste. La palabra era: $palabraActual", gano = false)
+        }
+    }
+
+    private fun desactivarTeclado() {
+        for (i in 0 until binding.keyboardContainer.childCount) {
+            val fila = binding.keyboardContainer.getChildAt(i)
+            if (fila is LinearLayout) for (j in 0 until fila.childCount) {
+                (fila.getChildAt(j) as? MaterialButton)?.apply {
+                    isEnabled = false; alpha = 0.5f
+                }
+            }
+        }
+    }
+
+    @SuppressLint("MissingInflatedId")
+    private fun mostrarDialogoPausa() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_pausa, null)
+        val dialog = Dialog(this)
+        dialog.setCancelable(false)
+        dialog.setContentView(dialogView)
+        dialog.window?.apply {
+            setLayout((resources.displayMetrics.widthPixels * 0.85).toInt(), WindowManager.LayoutParams.WRAP_CONTENT)
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        }
+        dialog.show()
+
+        dialogView.findViewById<Button>(R.id.btnContinuar).setOnClickListener { dialog.dismiss() }
+        dialogView.findViewById<Button>(R.id.btnReset).setOnClickListener {
+            startGame(); dialog.dismiss()
+        }
+        dialogView.findViewById<Button>(R.id.btnLeave).setOnClickListener { finish() }
+    }
+
+    private fun mostrarDialogoResultado(mensaje: String, puntos: Int = 0, gano: Boolean = false) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_resultado, null)
+        val dialog = AlertDialog.Builder(this).setView(dialogView).setCancelable(false).create()
+        val txtResultado = dialogView.findViewById<TextView>(R.id.txtResultado)
+        val txtPuntos = dialogView.findViewById<TextView>(R.id.txtPuntos)
+        val btnSeguir = dialogView.findViewById<AppCompatButton>(R.id.btnSeguir)
+        val btnSalir = dialogView.findViewById<AppCompatButton>(R.id.btnSalir)
+
+        txtResultado.text = mensaje
+        txtPuntos.visibility = if (gano) View.VISIBLE else View.GONE
+        if (gano) txtPuntos.text = "¡Ganaste $puntos puntos!"
+
+        btnSeguir.setOnClickListener { dialog.dismiss(); startGame() }
+        btnSalir.setOnClickListener { dialog.dismiss(); finish() }
+
+        dialog.window?.apply {
+            setBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.bg_dialog_overlay))
+            setLayout((resources.displayMetrics.widthPixels * 0.85).toInt(), WindowManager.LayoutParams.WRAP_CONTENT)
+            setGravity(Gravity.CENTER)
+        }
+        dialog.show()
+        desactivarTeclado()
+    }
+
+    private fun obtenerNivelUsuario(callback: (Int) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return callback(1)
+        db.collection("usuarios").document(uid).get()
+            .addOnSuccessListener { doc -> callback((doc.getLong("nivel") ?: 1L).toInt()) }
+            .addOnFailureListener { callback(1) }
     }
 
     @SuppressLint("MissingInflatedId")
@@ -211,89 +276,6 @@ class ModoClasicoActivity : AppCompatActivity() {
 
         dialogConfirm.show()
     }
-
-    private fun desactivarTeclado() {
-        for (i in 0 until binding.keyboardContainer.childCount) {
-            val fila = binding.keyboardContainer.getChildAt(i)
-            if (fila is LinearLayout) {
-                for (j in 0 until fila.childCount) {
-                    val boton = fila.getChildAt(j)
-                    if (boton is MaterialButton) {
-                        boton.isEnabled = false
-                        boton.alpha = 0.5f
-                    }
-                }
-            }
-        }
-    }
-
-    private fun verificarVictoria() {
-        if (palabraActual.all { letrasAdivinadas.contains(it) }) {
-            desactivarTeclado()
-            val puntosGanados = 10 + (nivelActual - 1) * 2
-            puntos += puntosGanados
-            binding.txtPuntos.text = "Puntos: $puntos"
-            val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
-            GameStatsManager.actualizarEstadisticas(puntosGanados, gano = true, duracionSegundos = duracion)
-            mostrarDialogoResultado("¡Felicidades! Adivinaste la palabra.", puntos = puntosGanados, gano = true)
-
-        }
-    }
-
-    private fun verificarDerrota() {
-        if (intentosRestantes <= 0) {
-            desactivarTeclado()
-            binding.txtPalabra.text = palabraActual.toCharArray().joinToString(" ")
-            val duracion = (System.currentTimeMillis() - partidaStartMillis) / 1000
-            GameStatsManager.actualizarEstadisticas(0, gano = false, duracionSegundos = duracion)
-            mostrarDialogoResultado("Perdiste. La palabra era: $palabraActual", gano = false)
-        }
-    }
-
-    private fun mostrarDialogoResultado(mensaje: String, puntos: Int = 0, gano: Boolean = false) {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_resultado, null)
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .setCancelable(false)
-            .create()
-
-        val txtResultado = dialogView.findViewById<TextView>(R.id.txtResultado)
-        val txtPuntos = dialogView.findViewById<TextView>(R.id.txtPuntos)
-        val btnSeguir = dialogView.findViewById<AppCompatButton>(R.id.btnSeguir)
-        val btnSalir = dialogView.findViewById<AppCompatButton>(R.id.btnSalir)
-
-        txtResultado.text = mensaje
-
-        if (gano) {
-            txtPuntos.visibility = View.VISIBLE
-            txtPuntos.text = "¡Ganaste $puntos puntos!"
-        } else {
-            txtPuntos.visibility = View.GONE
-        }
-
-        btnSeguir.setOnClickListener {
-            dialog.dismiss()
-            startGame()
-        }
-
-        btnSalir.setOnClickListener {
-            dialog.dismiss()
-            finish()
-        }
-
-        dialog.window?.apply {
-            setBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.bg_dialog_overlay))
-            setLayout(
-                (resources.displayMetrics.widthPixels * 0.85).toInt(),
-                WindowManager.LayoutParams.WRAP_CONTENT
-            )
-            setGravity(Gravity.CENTER)
-        }
-
-        dialog.show()
-        desactivarTeclado()
-    }
-
     private fun mostrarModalAdvertencia(mensaje: String) {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_advertencia, null)
         val txtMensaje = view.findViewById<TextView>(R.id.txtMensajeAdvertencia)
@@ -306,52 +288,5 @@ class ModoClasicoActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun obtenerNivelUsuario(callback: (Int) -> Unit) {
-        val uid = auth.currentUser?.uid ?: return callback(1)
-        db.collection("usuarios").document(uid).get()
-            .addOnSuccessListener { doc ->
-                val nivel = (doc.getLong("nivel") ?: 1L).toInt()
-                callback(nivel)
-            }
-            .addOnFailureListener { callback(1) }
-    }
-
-
-    private fun calcularNivelDesdePartidas(ganadas: Long): Long {
-        return when {
-            ganadas < 10 -> 1 // Nivel inicial
-            ganadas < 20 -> 2 // Nivel 2
-            ganadas < 35 -> 3
-            ganadas < 50 -> 4
-            else -> 5
-        }
-    }
-
-    @SuppressLint("MissingInflatedId")
-    private fun mostrarDialogoPausa() {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_pausa, null)
-
-        val dialog = Dialog(this)
-        dialog.setCancelable(false)
-        dialog.setContentView(dialogView)
-
-        dialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.85).toInt(),
-            WindowManager.LayoutParams.WRAP_CONTENT
-        )
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.show()
-
-        dialogView.findViewById<Button>(R.id.btnContinuar).setOnClickListener {
-            dialog.dismiss()
-        }
-        dialogView.findViewById<Button>(R.id.btnReset).setOnClickListener {
-            startGame()
-            dialog.dismiss()
-        }
-        dialogView.findViewById<Button>(R.id.btnLeave).setOnClickListener {
-            finish()
-        }
-    }
 
 }

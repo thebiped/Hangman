@@ -40,13 +40,14 @@ class RankingFragment : Fragment() {
         cargarRanking()
         return view
     }
-
     private fun cargarRanking() {
         FirebaseService.getRanking(
             onComplete = { listaUsuarios ->
                 contenedorRanking.removeAllViews()
 
-                for ((index, user) in listaUsuarios.withIndex()) {
+                val listaOrdenada = listaUsuarios.sortedByDescending { it.puntuacionTotal }
+
+                for ((index, user) in listaOrdenada.withIndex()) {
                     val item = layoutInflater.inflate(R.layout.ranking_item, contenedorRanking, false)
 
                     val txtPosicion = item.findViewById<TextView>(R.id.tvPosicion)
@@ -58,9 +59,11 @@ class RankingFragment : Fragment() {
 
                     txtPosicion.text = "#${index + 1}"
                     txtNombre.text = user.nombreUsuario
-                    txtPuntos.text = "${user.partidasGanadas}" // WIN
-                    txtBonus.text = "${user.partidasPerdidas}" // Lose
-                    txtTotal.text = "${user.puntuacionTotal} pts"
+                    txtPuntos.text = "${user.partidasGanadas}"
+                    txtBonus.text = "${user.partidasPerdidas}"
+                    val porcentajeGanadas = if (user.partidasGanadas + user.partidasPerdidas > 0)
+                        (user.partidasGanadas * 100) / (user.partidasGanadas + user.partidasPerdidas) else 0
+                    txtTotal.text = "${user.puntuacionTotal} pts | $porcentajeGanadas% WIN"
 
                     if (!user.imagenPerfil.isNullOrEmpty()) {
                         Glide.with(this).load(user.imagenPerfil).into(imgPerfil)
@@ -71,11 +74,10 @@ class RankingFragment : Fragment() {
                     contenedorRanking.addView(item)
                 }
             },
-            onError = { e ->
-                e.printStackTrace()
-            }
+            onError = { e -> e.printStackTrace() }
         )
     }
+
 
     private fun generateInitialsAvatar(name: String): Bitmap {
         val initials = name.split(" ").mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("").take(2)
