@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/layoutPerfil"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,7 +10,8 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingBottom="16dp">
+        android:layout_above="@id/bottomNavigation"
+        tools:ignore="NotSibling">
 
         <LinearLayout
             android:orientation="vertical"
@@ -21,14 +23,17 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="16dp"
+                android:paddingVertical="8dp">
 
                 <LinearLayout
                     android:id="@+id/profileContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:padding="8dp"
+                    android:gravity="center_vertical"
+                    android:layout_alignParentStart="true">
 
                     <ImageView
                         android:layout_width="20dp"
@@ -53,10 +58,10 @@
                     android:minWidth="48dp"
                     android:minHeight="42dp"
                     android:background="@drawable/bg_logout"
+                    android:contentDescription="Cerrar sesión"
                     android:drawableStart="@drawable/ic_logout"
                     android:drawableTint="@color/textWhite"
                     android:gravity="center"
-                    android:contentDescription="Cerrar sesión"
                     android:padding="12dp"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"/>
@@ -67,23 +72,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="8dp">
+                android:gravity="center_vertical">
 
                 <ImageView
                     android:id="@+id/imgPerfil"
                     android:layout_width="100dp"
                     android:layout_height="100dp"
+                    android:layout_gravity="start"
+                    android:layout_marginBottom="8dp"
                     android:scaleType="centerCrop"
                     android:src="@drawable/avatar"
                     android:background="@drawable/bg_profile_border"
-                    android:clipToOutline="true" />
+                    android:clipToOutline="true"
+                    android:outlineProvider="background"  />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="16dp"
+                    android:layout_marginLeft="15dp"
                     android:orientation="vertical">
 
                     <TextView
@@ -105,13 +112,25 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Botón editar -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnEditarPerfil"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Editar perfil"
+                android:textColor="@android:color/white"
+                android:background="@drawable/btn_edit_profile"
+                android:layout_marginTop="16dp" />
+
             <!-- Nivel -->
             <TextView
                 android:id="@+id/txtNivel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="Nivel:"
                 android:textColor="@android:color/white"
-                android:textSize="14sp"/>
+                android:textSize="14sp"
+                android:layout_marginTop="24dp" />
 
             <!-- Barra de nivel -->
             <RelativeLayout
@@ -124,21 +143,22 @@
 
                 <View
                     android:id="@+id/barraNivel"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:background="@drawable/bg_bar_pink" />
 
                 <TextView
                     android:id="@+id/txtDificultad"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
                     android:text="Principiante"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
                     android:layout_marginEnd="8dp"
                     android:textColor="@android:color/white"
-                    android:textSize="12sp"/>
+                    android:textSize="12sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
             </RelativeLayout>
+
 
             <!-- Estadísticas -->
             <TextView
@@ -147,154 +167,148 @@
                 android:text="Estadísticas:"
                 android:textColor="@android:color/white"
                 android:textSize="14sp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginTop="24dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <!-- Partidas Ganadas -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/bg_uno"
-                    android:padding="12dp"
-                    android:layout_marginEnd="8dp">
-
-                    <ImageView
-                        android:src="@drawable/ic_trophy"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        app:tint="#DA3CB0" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Ganadas"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp"/>
-
-                    <TextView
-                        android:id="@+id/txtPartidasGanadas"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold"
-                        android:textSize="14sp"/>
-                </LinearLayout>
-
-                <!-- Partidas Perdidas -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/bg_uno"
-                    android:padding="12dp"
-                    android:layout_marginStart="8dp">
-
-                    <ImageView
-                        android:src="@drawable/ic_flag"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        app:tint="@android:color/white" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Perdidas"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp"/>
-
-                    <TextView
-                        android:id="@+id/txtPartidasPerdidas"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold"
-                        android:textSize="14sp"/>
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Puntos Totales / Horas -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="12dp">
+                android:orientation="vertical"
+                android:layout_marginTop="8dp">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/bg_uno"
-                    android:padding="12dp"
-                    android:layout_marginEnd="8dp">
+                    android:orientation="horizontal">
 
-                    <ImageView
-                        android:src="@drawable/ic_clock"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        app:tint="#FFC107" />
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:layout_margin="10dp"
+                        android:gravity="center"
+                        android:background="@drawable/bg_uno"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Horas"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp"/>
+                        <ImageView
+                            android:src="@drawable/ic_trophy"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            app:tint="#DA3CB0" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Partidas ganadas"
+                            android:textColor="@android:color/white"
+                            android:textSize="12sp"/>
+                        <TextView
+                            android:id="@+id/txtPartidasGanadas"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/txtHorasJugadas"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold"
-                        android:textSize="14sp"/>
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:layout_margin="10dp"
+                        android:gravity="center"
+                        android:background="@drawable/bg_uno"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:src="@drawable/ic_flag"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            app:tint="@android:color/white" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Partidas perdidas"
+                            android:textColor="@android:color/white"
+                            android:textSize="12sp"/>
+                        <TextView
+                            android:id="@+id/txtPartidasPerdidas"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/bg_uno"
-                    android:padding="12dp"
-                    android:layout_marginStart="8dp">
+                    android:orientation="horizontal">
 
-                    <ImageView
-                        android:src="@drawable/ic_star_profile"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        app:tint="#F95F57" />
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:layout_margin="10dp"
+                        android:gravity="center"
+                        android:background="@drawable/bg_uno"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Puntos"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp"/>
+                        <ImageView
+                            android:src="@drawable/ic_clock"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            app:tint="#FFC107" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Horas"
+                            android:textColor="@android:color/white"
+                            android:textSize="12sp"/>
+                        <TextView
+                            android:id="@+id/txtHorasJugadas"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/txtPuntos"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold"
-                        android:textSize="14sp"/>
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:layout_margin="10dp"
+                        android:gravity="center"
+                        android:background="@drawable/bg_uno"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:src="@drawable/ic_star_profile"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            app:tint="#F95F57" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Nivel"
+                            android:textColor="@android:color/white"
+                            android:textSize="12sp"/>
+                        <TextView
+                            android:id="@+id/txtPuntosTotales"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 
@@ -316,6 +330,7 @@
                 android:padding="8dp"
                 android:background="@drawable/bg_match"
                 android:layout_marginBottom="16dp" />
+
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

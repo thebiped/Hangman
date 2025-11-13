@@ -10,10 +10,7 @@ import com.example.hangman.databinding.ActivityTematicaBinding
 
 class TematicaActivity : AppCompatActivity() {
 
-    //  Binding para acceder a los elementos del layout
     private lateinit var binding: ActivityTematicaBinding
-
-    //  Guarda la temática seleccionada por el usuario
     private var temaSeleccionado: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,9 +19,8 @@ class TematicaActivity : AppCompatActivity() {
         binding = ActivityTematicaBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        //  Configura los botones principales
-        // Cada botón llama a showConfirmDialog con la temática correspondiente
-        binding.btnCerrarTematica.setOnClickListener { finish() } // cierra la pantalla
+        // Configura interacciones generales de botones
+        binding.btnCerrarTematica.setOnClickListener { finish() }
         binding.btnAnimales.setOnClickListener { showConfirmDialog("animales") }
         binding.btnDeportes.setOnClickListener { showConfirmDialog("deportes") }
         binding.btnComidas.setOnClickListener { showConfirmDialog("comidas") }
@@ -33,47 +29,41 @@ class TematicaActivity : AppCompatActivity() {
         binding.btnEmociones.setOnClickListener { showConfirmDialog("emociones") }
     }
 
-    //  Función que muestra un diálogo de confirmación para la temática elegida
+    // Muestra un diálogo de confirmación para la temática seleccionada
     private fun showConfirmDialog(tematica: String) {
-        temaSeleccionado = tematica // guarda temporalmente la temática
+        temaSeleccionado = tematica
 
-        //  Inflar layout personalizado del diálogo
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_confirm, null)
         val txtConfirm = dialogView.findViewById<android.widget.TextView>(R.id.txtConfirmacion)
-
-        //  Cambia el texto del diálogo según la temática
         txtConfirm.text = "¿Querés jugar ahora en la temática «${tematica.replaceFirstChar { it.uppercase() }}\"?"
 
-        //  Crear el diálogo con estilo personalizado
         val dialog = AlertDialog.Builder(this, R.style.CustomAlertDialogStyle)
             .setView(dialogView)
-            .setCancelable(true) // se puede cerrar tocando fuera
+            .setCancelable(true)
             .create()
 
-        //  Configura botones del diálogo
         dialogView.findViewById<android.widget.Button>(R.id.btnCancelar).setOnClickListener {
-            dialog.dismiss() // cierra el diálogo si se cancela
+            dialog.dismiss()
         }
 
         dialogView.findViewById<android.widget.Button>(R.id.btnContinuar).setOnClickListener {
-            dialog.dismiss() // cierra diálogo
-            abrirModo(tematica) // abre la pantalla de juego con la temática
+            dialog.dismiss()
+            abrirModo(tematica)
         }
 
-        //  Ajustes visuales del diálogo
         dialog.window?.apply {
-            setBackgroundDrawableResource(android.R.color.transparent) // fondo transparente
-            setLayout((resources.displayMetrics.widthPixels * 0.85).toInt(), WindowManager.LayoutParams.WRAP_CONTENT) // tamaño
-            setGravity(android.view.Gravity.CENTER) // centrado en pantalla
+            setBackgroundDrawableResource(android.R.color.transparent)
+            setLayout((resources.displayMetrics.widthPixels * 0.85).toInt(), WindowManager.LayoutParams.WRAP_CONTENT)
+            setGravity(android.view.Gravity.CENTER)
         }
 
-        dialog.show() // muestra el diálogo
+        dialog.show()
     }
 
-    //  Función que redirige a la actividad de juego con la temática seleccionada
+    // Redirige a la pantalla de juego con la temática seleccionada
     private fun abrirModo(tematica: String) {
         val intent = Intent(this, ModoTematicaActivity::class.java)
-        intent.putExtra("tematica", tematica) // pasa la temática a la siguiente actividad
-        startActivity(intent) // inicia la nueva actividad
+        intent.putExtra("tematica", tematica)
+        startActivity(intent)
     }
 }
